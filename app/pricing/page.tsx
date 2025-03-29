@@ -1,10 +1,13 @@
+"use client";
+
 import {Button} from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card";
-import {CheckIcon, XIcon, RocketIcon, CreditCardIcon} from "lucide-react";
+import {CheckIcon, XIcon, GitPullRequestIcon, CreditCardIcon} from "lucide-react";
 import Link from "next/link";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 import {Navbar} from "@/components/navbar";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 
 export default function PricingPage() {
   const plans = [
@@ -81,7 +84,7 @@ export default function PricingPage() {
     },
     {
       question: "How does repository counting work?",
-      answer: "A repository counts towards your plan limit when GitMate is actively installed and configured to review code. You can add and remove repositories at any time within your plan limits."
+      answer: "A repository count towards your plan limit when GitMate is actively installed and configured to review code. You can add and remove repositories at any time within your plan limits."
     },
     {
       question: "Is there a plan for open source projects?",
@@ -100,28 +103,6 @@ export default function PricingPage() {
   return (
     <div className='flex min-h-screen flex-col'>
       <Navbar />
-      <header className='sticky top-0 z-10 border-b bg-background'>
-        <div className='container flex h-16 items-center px-4 sm:px-6 lg:px-8'>
-          <div className='flex items-center gap-2 font-bold text-xl'>
-            <RocketIcon className='h-6 w-6' />
-            <span>GitMate</span>
-          </div>
-          <nav className='ml-auto flex gap-4 sm:gap-6'>
-            <Link href='/' className='text-sm font-medium hover:underline'>
-              Home
-            </Link>
-            <Link href='/features' className='text-sm font-medium hover:underline'>
-              Features
-            </Link>
-            <Link href='/pricing' className='text-sm font-medium hover:underline'>
-              Pricing
-            </Link>
-            <Link href='/docs' className='text-sm font-medium hover:underline'>
-              Docs
-            </Link>
-          </nav>
-        </div>
-      </header>
       <main className='flex-1'>
         <section className='w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background to-muted'>
           <div className='container px-4 md:px-6'>
@@ -139,7 +120,7 @@ export default function PricingPage() {
                   <div className='mt-8 grid gap-6 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3'>
                     {plans.map(plan => (
                       <TabsContent key={plan.name} value='monthly' className='h-full'>
-                        <Card className={`flex h-full flex-col ${plan.popular ? "border-primary shadow-lg" : ""}`}>
+                        <Card className={`flex h-full flex-col relative ${plan.popular ? "border-primary shadow-lg" : ""}`}>
                           {plan.popular && <div className='absolute -top-4 left-0 right-0 mx-auto w-fit rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground'>Most Popular</div>}
                           <CardHeader className={`${plan.popular ? "pt-8" : ""}`}>
                             <CardTitle>{plan.name}</CardTitle>
@@ -167,7 +148,7 @@ export default function PricingPage() {
                     ))}
                     {plans.map(plan => (
                       <TabsContent key={`${plan.name}-yearly`} value='yearly' className='h-full'>
-                        <Card className={`flex h-full flex-col ${plan.popular ? "border-primary shadow-lg" : ""}`}>
+                        <Card className={`flex h-full flex-col relative ${plan.popular ? "border-primary shadow-lg" : ""}`}>
                           {plan.popular && <div className='absolute -top-4 left-0 right-0 mx-auto w-fit rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground'>Most Popular</div>}
                           <CardHeader className={`${plan.popular ? "pt-8" : ""}`}>
                             <CardTitle>{plan.name}</CardTitle>
@@ -208,69 +189,69 @@ export default function PricingPage() {
                 <p className='text-muted-foreground'>Find the plan that best fits your needs</p>
               </div>
 
-              <div className='overflow-x-auto'>
-                <table className='w-full border-collapse'>
-                  <thead>
-                    <tr className='border-b'>
-                      <th className='py-4 text-left font-medium'>Features</th>
-                      <th className='py-4 text-center font-medium'>Free</th>
-                      <th className='py-4 text-center font-medium'>Pro</th>
-                      <th className='py-4 text-center font-medium'>Team</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className='border-b'>
-                      <td className='py-4'>Repositories</td>
-                      <td className='py-4 text-center'>Up to 3</td>
-                      <td className='py-4 text-center'>Up to 10</td>
-                      <td className='py-4 text-center'>Unlimited</td>
-                    </tr>
-                    <tr className='border-b'>
-                      <td className='py-4'>Review Depth</td>
-                      <td className='py-4 text-center'>Basic</td>
-                      <td className='py-4 text-center'>Advanced</td>
-                      <td className='py-4 text-center'>Advanced</td>
-                    </tr>
-                    <tr className='border-b'>
-                      <td className='py-4'>Reviewer Tones</td>
-                      <td className='py-4 text-center'>1</td>
-                      <td className='py-4 text-center'>All</td>
-                      <td className='py-4 text-center'>All + Custom</td>
-                    </tr>
-                    <tr className='border-b'>
-                      <td className='py-4'>Code Insights</td>
-                      <td className='py-4 text-center'>Basic</td>
-                      <td className='py-4 text-center'>Advanced</td>
-                      <td className='py-4 text-center'>Advanced + Custom</td>
-                    </tr>
-                    <tr className='border-b'>
-                      <td className='py-4'>Team Analytics</td>
-                      <td className='py-4 text-center'>
+              <div className='w-full overflow-x-auto'>
+                <Table className='w-full'>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className='w-[200px]'>Features</TableHead>
+                      <TableHead className='text-center w-[150px]'>Free</TableHead>
+                      <TableHead className='text-center w-[150px]'>Pro</TableHead>
+                      <TableHead className='text-center w-[150px]'>Team</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>Repositories</TableCell>
+                      <TableCell className='text-center'>Up to 3</TableCell>
+                      <TableCell className='text-center'>Up to 10</TableCell>
+                      <TableCell className='text-center'>Unlimited</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Review Depth</TableCell>
+                      <TableCell className='text-center'>Basic</TableCell>
+                      <TableCell className='text-center'>Advanced</TableCell>
+                      <TableCell className='text-center'>Advanced</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Reviewer Tones</TableCell>
+                      <TableCell className='text-center'>1</TableCell>
+                      <TableCell className='text-center'>All</TableCell>
+                      <TableCell className='text-center'>All + Custom</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Code Insights</TableCell>
+                      <TableCell className='text-center'>Basic</TableCell>
+                      <TableCell className='text-center'>Advanced</TableCell>
+                      <TableCell className='text-center'>Advanced + Custom</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Team Analytics</TableCell>
+                      <TableCell className='text-center'>
                         <XIcon className='mx-auto h-4 w-4 text-muted-foreground' />
-                      </td>
-                      <td className='py-4 text-center'>Basic</td>
-                      <td className='py-4 text-center'>Advanced</td>
-                    </tr>
-                    <tr className='border-b'>
-                      <td className='py-4'>Support</td>
-                      <td className='py-4 text-center'>Community</td>
-                      <td className='py-4 text-center'>Email</td>
-                      <td className='py-4 text-center'>Priority</td>
-                    </tr>
-                    <tr>
-                      <td className='py-4'>Custom Rules</td>
-                      <td className='py-4 text-center'>
+                      </TableCell>
+                      <TableCell className='text-center'>Basic</TableCell>
+                      <TableCell className='text-center'>Advanced</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Support</TableCell>
+                      <TableCell className='text-center'>Community</TableCell>
+                      <TableCell className='text-center'>Email</TableCell>
+                      <TableCell className='text-center'>Priority</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Custom Rules</TableCell>
+                      <TableCell className='text-center'>
                         <XIcon className='mx-auto h-4 w-4 text-muted-foreground' />
-                      </td>
-                      <td className='py-4 text-center'>
+                      </TableCell>
+                      <TableCell className='text-center'>
                         <XIcon className='mx-auto h-4 w-4 text-muted-foreground' />
-                      </td>
-                      <td className='py-4 text-center'>
+                      </TableCell>
+                      <TableCell className='text-center'>
                         <CheckIcon className='mx-auto h-4 w-4 text-primary' />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
               </div>
             </div>
           </div>

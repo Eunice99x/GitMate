@@ -1,7 +1,6 @@
 "use client";
 
 import {useParams, useRouter} from "next/navigation";
-import {useSession} from "next-auth/react";
 import {useEffect, useState} from "react";
 import {fetchUserRepositories, fetchRepositoryPullRequests} from "@/lib/github";
 import {Button} from "@/components/ui/button";
@@ -17,6 +16,7 @@ import {GitlabIcon as GitHubLogoIcon, GitPullRequestIcon, ArrowLeftIcon, Loader2
 import Link from "next/link";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useToast} from "@/hooks/use-toast";
+import {useSettings} from "@/hooks/use-settings";
 
 interface Repository {
   id: number;
@@ -45,7 +45,7 @@ interface PullRequest {
 export default function RepositoryPage() {
   const params = useParams();
   const router = useRouter();
-  const {data: session} = useSession();
+  const {settings} = useSettings();
   const [repository, setRepository] = useState<Repository | null>(null);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,13 +60,13 @@ export default function RepositoryPage() {
 
   useEffect(() => {
     async function loadRepositoryData() {
-      if (!session?.accessToken) return;
+      if (!settings.githubToken) return;
 
       try {
         setLoading(true);
 
         // Fetch all repositories to find the one with matching ID
-        const repos = await fetchUserRepositories(session.accessToken as string);
+        const repos = await fetchUserRepositories(settings.githubToken);
         const repo = repos.find((r: any) => r.id.toString() === repoId);
 
         if (!repo) {
@@ -82,7 +82,7 @@ export default function RepositoryPage() {
         setRepository(repo);
 
         // Fetch pull requests for this repository
-        const prs = await fetchRepositoryPullRequests(repo.name, session.accessToken as string);
+        const prs = await fetchRepositoryPullRequests(repo.name, settings.githubToken);
         setPullRequests(prs);
       } catch (error) {
         console.error("Error loading repository data:", error);
@@ -97,7 +97,7 @@ export default function RepositoryPage() {
     }
 
     loadRepositoryData();
-  }, [session, repoId, router, toast]);
+  }, [settings.githubToken, repoId, router, toast]);
 
   // Update the handleManualReview function to include a timeout
   const handleManualReview = async (prNumber: number) => {

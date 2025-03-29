@@ -1,17 +1,25 @@
 import NextAuth from "next-auth";
+import type {AuthConfig} from "@auth/core";
 import GithubProvider from "next-auth/providers/github";
-import {GITHUB_ID, GITHUB_SECRET} from "@/lib/env";
 
-if (!GITHUB_ID || !GITHUB_SECRET) {
-  console.error("Missing GitHub OAuth credentials. Please set GITHUB_ID and GITHUB_SECRET environment variables.");
-  throw new Error("Missing GitHub OAuth credentials. Please set GITHUB_ID and GITHUB_SECRET environment variables.");
+declare module "@auth/core/types" {
+  interface Session {
+    user: {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      githubId?: string;
+      username?: string;
+    };
+  }
 }
 
-const handler = NextAuth({
+const config: AuthConfig = {
   providers: [
     GithubProvider({
-      clientId: GITHUB_ID,
-      clientSecret: GITHUB_SECRET,
+      clientId: process.env.GITHUB_ID || "",
+      clientSecret: process.env.GITHUB_SECRET || "",
       authorization: {
         params: {
           scope: "read:user user:email repo"
@@ -20,25 +28,36 @@ const handler = NextAuth({
     })
   ],
   callbacks: {
-    async jwt({token, account}) {
-      // Persist the OAuth access_token to the token right after signin
+    async jwt({token, profile, account}) {
+      if (profile) {
+        token.githubId = profile.id;
+        token.username = profile.login;
+      }
       if (account) {
-        console.log("Setting access token in JWT:", account.access_token?.substring(0, 5) + "...");
         token.accessToken = account.access_token;
       }
       return token;
     },
     async session({session, token}) {
-      // Send properties to the client, like an access_token from a provider
-      session.accessToken = token.accessToken;
-      console.log("Setting access token in session:", token.accessToken ? (token.accessToken as string).substring(0, 5) + "..." : "none");
+      if (session.user) {
+        session.user.githubId = token.githubId as string;
+        session.user.username = token.username as string;
+      }
       return session;
+    },
+    async redirect({url, baseUrl}) {
+      if (url.startsWith(baseUrl)) {
+        return `${baseUrl}/settings`;
+      }
+      return url;
     }
   },
   pages: {
     signIn: "/auth/signin"
   },
   debug: process.env.NODE_ENV === "development"
-});
+};
+
+const handler = NextAuth(config);
 
 export {handler as GET, handler as POST};

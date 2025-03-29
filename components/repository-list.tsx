@@ -5,10 +5,10 @@ import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Switch} from "@/components/ui/switch";
 import {GitlabIcon as GitHubLogoIcon, SettingsIcon, Loader2Icon, AlertCircleIcon} from "lucide-react";
-import {useSession} from "next-auth/react";
 import {useEffect, useState} from "react";
 import {fetchUserRepositories, toggleRepositoryStatus} from "@/lib/github";
 import {useToast} from "@/hooks/use-toast";
+import {useSettings} from "@/hooks/use-settings";
 
 interface Repository {
   id: number;
@@ -24,7 +24,7 @@ interface Repository {
 }
 
 export function RepositoryList() {
-  const {data: session} = useSession();
+  const {settings} = useSettings();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,12 +32,12 @@ export function RepositoryList() {
 
   useEffect(() => {
     async function loadRepositories() {
-      if (session?.accessToken) {
+      if (settings.githubToken) {
         try {
           setLoading(true);
-          console.log("Loading repositories with token:", session.accessToken.substring(0, 5) + "...");
+          console.log("Loading repositories with token:", settings.githubToken.substring(0, 5) + "...");
 
-          const repos = await fetchUserRepositories(session.accessToken as string);
+          const repos = await fetchUserRepositories(settings.githubToken);
 
           // Transform the data to match our component's expected format
           // In a real app, you'd fetch the enabled status and review counts from your database
@@ -57,24 +57,24 @@ export function RepositoryList() {
           setLoading(false);
         }
       } else {
-        console.log("No session access token available");
+        console.log("No GitHub token available");
         setLoading(false);
-        setError("Authentication required. Please sign in with GitHub to view your repositories.");
+        setError("GitHub token required. Please configure your settings to view your repositories.");
       }
     }
 
     loadRepositories();
-  }, [session]);
+  }, [settings.githubToken]);
 
   const handleToggleStatus = async (repoId: number, enabled: boolean) => {
     try {
-      if (!session?.accessToken) return;
+      if (!settings.githubToken) return;
 
       // Optimistically update the UI
       setRepositories(repos => repos.map(repo => (repo.id === repoId ? {...repo, enabled} : repo)));
 
       // Call the API to update the status
-      await toggleRepositoryStatus(repoId, enabled, session.accessToken as string);
+      await toggleRepositoryStatus(repoId, enabled, settings.githubToken);
 
       toast({
         title: enabled ? "Repository enabled" : "Repository disabled",

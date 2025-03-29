@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import {signIn} from "next-auth/react";
 import {Button} from "@/components/ui/button";
 import {GitlabIcon as GitHubLogoIcon, RocketIcon, GemIcon as GearIcon, BarChartIcon, CheckIcon, ArrowRightIcon} from "lucide-react";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Navbar} from "@/components/navbar";
-import {GitHubAuthButton} from "@/components/github-auth-button";
 
 export default function Home() {
   return (
@@ -19,9 +21,10 @@ export default function Home() {
                   <p className='max-w-[600px] text-muted-foreground md:text-xl'>Improve your code quality with helpful, personalized code reviews that make coding more fun.</p>
                 </div>
                 <div className='flex flex-col sm:flex-row gap-4'>
-                  <GitHubAuthButton size='lg' mode='install' callbackUrl='/dashboard'>
-                    Install on GitHub
-                  </GitHubAuthButton>
+                  <Button size='lg' onClick={() => signIn("github", {callbackUrl: "/settings"})} className='gap-2'>
+                    <GitHubLogoIcon className='h-5 w-5' />
+                    Sign in with GitHub
+                  </Button>
                   <Link href='/features'>
                     <Button size='lg' variant='outline' className='gap-2'>
                       Learn More
@@ -188,9 +191,9 @@ export default function Home() {
                   </li>
                 </ul>
                 <div className='mt-6'>
-                  <Button size='lg' className='gap-2'>
+                  <Button size='lg' onClick={() => signIn("github", {callbackUrl: "/dashboard"})} className='gap-2'>
                     <GitHubLogoIcon className='h-5 w-5' />
-                    Get Started
+                    Sign in with GitHub
                   </Button>
                 </div>
               </div>

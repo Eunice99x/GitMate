@@ -1,6 +1,5 @@
 "use client";
 
-import {useSession} from "next-auth/react";
 import {useState} from "react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
@@ -10,7 +9,6 @@ import {RepositoryList} from "@/components/repository-list";
 import {useToast} from "@/hooks/use-toast";
 
 export default function RepositoriesPage() {
-  const {data: session} = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const {toast} = useToast();
 
