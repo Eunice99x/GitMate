@@ -5,8 +5,9 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button";
 import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {AlertCircle} from "lucide-react";
+import {Suspense} from "react";
 
-export default function AuthError() {
+function ErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 
@@ -57,28 +58,36 @@ export default function AuthError() {
   }
 
   return (
+    <Card className='w-full max-w-md'>
+      <CardHeader>
+        <CardTitle className='text-2xl font-bold text-center'>Authentication Error</CardTitle>
+        <CardDescription className='text-center'>There was a problem with the authentication process.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Alert variant='destructive' className='mb-6'>
+          <AlertCircle className='h-4 w-4' />
+          <AlertTitle>{errorMessage}</AlertTitle>
+          <AlertDescription>{errorDescription}</AlertDescription>
+        </Alert>
+        <div className='space-y-4'>
+          <Button className='w-full' onClick={() => (window.location.href = "/auth/signin")}>
+            Try Again
+          </Button>
+          <Button variant='outline' className='w-full' onClick={() => (window.location.href = "/settings")}>
+            Configure GitHub OAuth
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function AuthError() {
+  return (
     <div className='flex min-h-screen flex-col items-center justify-center p-4'>
-      <Card className='w-full max-w-md'>
-        <CardHeader>
-          <CardTitle className='text-2xl font-bold text-center'>Authentication Error</CardTitle>
-          <CardDescription className='text-center'>There was a problem with the authentication process.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert variant='destructive' className='mb-6'>
-            <AlertCircle className='h-4 w-4' />
-            <AlertTitle>{errorMessage}</AlertTitle>
-            <AlertDescription>{errorDescription}</AlertDescription>
-          </Alert>
-          <div className='space-y-4'>
-            <Button className='w-full' onClick={() => (window.location.href = "/auth/signin")}>
-              Try Again
-            </Button>
-            <Button variant='outline' className='w-full' onClick={() => (window.location.href = "/settings")}>
-              Configure GitHub OAuth
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ErrorContent />
+      </Suspense>
     </div>
   );
 }
