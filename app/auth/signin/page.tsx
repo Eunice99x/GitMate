@@ -1,52 +1,57 @@
 "use client";
 
-import {signIn} from "next-auth/react";
 import {Button} from "@/components/ui/button";
-import {Github, Rocket} from "lucide-react";
-import type {Metadata} from "next";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import Link from "next/link";
 import {Navbar} from "@/components/navbar";
 
-export const metadata: Metadata = {
-  title: "Sign In - GitMate",
-  description: "Sign in to your GitMate account"
-};
-
-export default function SignIn() {
+export default function SignInPage() {
   return (
     <div className='flex min-h-screen flex-col'>
       <Navbar />
-      <div className='flex flex-1 items-center justify-center bg-muted/40 px-4'>
-        <Card className='w-full max-w-md'>
-          <CardHeader className='space-y-1 text-center'>
-            <div className='flex justify-center'>
-              <Rocket className='h-10 w-10 text-primary' />
-            </div>
-            <CardTitle className='text-2xl font-bold'>Welcome to GitMate</CardTitle>
-            <CardDescription>Sign in with GitHub to connect your repositories</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='space-y-4'>
-              <Button variant='outline' type='button' onClick={() => signIn("github", {callbackUrl: "/"})}>
-                <Github className='mr-2 h-4 w-4' />
-                Sign in with GitHub
-              </Button>
-              <div className='text-center text-sm text-muted-foreground'>
-                By signing in, you agree to our{" "}
-                <Link href='/terms' className='underline underline-offset-4 hover:text-primary'>
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href='/privacy' className='underline underline-offset-4 hover:text-primary'>
-                  Privacy Policy
-                </Link>
-                .
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <main className='flex-1 container py-8'>
+        <div className='max-w-sm mx-auto space-y-6'>
+          <div>
+            <h1 className='text-3xl font-bold'>Sign In</h1>
+            <p className='text-muted-foreground'>Enter your credentials to access your account</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Welcome Back</CardTitle>
+              <CardDescription>Sign in to your GitMate account to continue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='email'>Email</Label>
+                  <Input id='email' type='email' placeholder='Enter your email' required />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='password'>Password</Label>
+                  <Input id='password' type='password' placeholder='Enter your password' required />
+                </div>
+
+                <Button type='submit' className='w-full'>
+                  Sign In
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <div className='text-center text-sm'>
+            <p className='text-muted-foreground'>
+              Don't have an account?{" "}
+              <Link href='/auth/signup' className='text-primary hover:underline'>
+                Sign up
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
