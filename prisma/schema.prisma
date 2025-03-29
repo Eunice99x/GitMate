@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+  }
+  
+  datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+  }
+  
+  model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String?   @unique
+    emailVerified DateTime?
+    image         String?
+    githubId      String?   @unique
+    username      String?
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    role          UserRole  @default(USER)
+    accounts      Account[]
+    sessions      Session[]
+    teams         TeamMember[]
+  }
+  
+  model Account {
+    id                String  @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.Text
+    session_state     String?
+  
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+    @@unique([provider, providerAccountId])
+  }
+  
+  model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  }
+  
+  model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
+  
+    @@unique([identifier, token])
+  }
+  
+  model Team {
+    id          String      @id @default(cuid())
+    name        String
+    description String?
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    members     TeamMember[]
+    repositories Repository[]
+  }
+  
+  model TeamMember {
+    id        String    @id @default(cuid())
+    teamId    String
+    userId    String
+    role      TeamRole  @default(MEMBER)
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+    @@unique([teamId, userId])
+  }
+  
+  model Repository {
+    id          String    @id @default(cuid())
+    name        String
+    githubId    String    @unique
+    fullName    String
+    description String?
+    private     Boolean   @default(false)
+    enabled     Boolean   @default(true)
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    teamId      String?
+    team        Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
+    settings    RepositorySettings?
+    reviews     Review[]
+    rules       ReviewRule[]
+  }
+  
+  model RepositorySettings {
+    id                 String    @id @default(cuid())
+    repositoryId       String    @unique
+    repository         Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+    automaticReviews   Boolean   @default(true)
+    commandBasedReviews Boolean   @default(true)
+    reviewTone         String    @default("Constructive Critic")
+    aiProvider         String    @default("gemini")
+    createdAt          DateTime  @default(now())
+    updatedAt          DateTime  @updatedAt
+  }
+  
+  model Review {
+    id                String    @id @default(cuid())
+    repositoryId      String
+    repository        Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+    pullRequestNumber Int
+    pullRequestTitle  String
+    authorUsername    String
+    reviewContent     String    @db.Text
+    aiProvider        String
+    reviewTone        String
+    createdAt         DateTime  @default(now())
+  }
+  
+  model ReviewRule {
+    id           String    @id @default(cuid())
+    repositoryId String
+    repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+    name         String
+    description  String?
+    ruleType     RuleType
+    pattern      String
+    severity     Severity  @default(WARNING)
+    enabled      Boolean   @default(true)
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+  }
+  
+  enum UserRole {
+    USER
+    ADMIN
+  }
+  
+  enum TeamRole {
+    OWNER
+    ADMIN
+    MEMBER
+    VIEWER
+  }
+  
+  enum RuleType {
+    PATTERN
+    COMPLEXITY
+    NAMING
+    SECURITY
+    PERFORMANCE
+    CUSTOM
+  }
+  
+  enum Severity {
+    INFO
+    WARNING
+    ERROR
+  }
+  
+  

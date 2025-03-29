@@ -1,39 +1,40 @@
-// Environment variable validation and access
+// Environment variables with validation
 
-// GitHub Authentication
+// GitHub OAuth credentials
 export const GITHUB_ID = process.env.GITHUB_ID;
 export const GITHUB_SECRET = process.env.GITHUB_SECRET;
 export const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+// export const GITHUB_WEBHOOK_SECRET = process.env.GITHUB_WEBHOOK_SECRET;
 
-// AI Providers
+// AI provider API keys
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 export const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 export const DEFAULT_AI_PROVIDER = process.env.DEFAULT_AI_PROVIDER || "gemini";
 
-// Next.js and Auth
+// Next Auth
 export const NEXTAUTH_URL = process.env.NEXTAUTH_URL;
 export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
+// Database
+// export const DATABASE_URL = process.env.DATABASE_URL;
+
 // Validate required environment variables
-export function validateEnv() {
-  const requiredEnvVars = [
-    {name: "GITHUB_ID", value: GITHUB_ID},
-    {name: "GITHUB_SECRET", value: GITHUB_SECRET},
-    {name: "GITHUB_TOKEN", value: GITHUB_TOKEN},
-    {name: "NEXTAUTH_URL", value: NEXTAUTH_URL},
-    {name: "NEXTAUTH_SECRET", value: NEXTAUTH_SECRET}
-  ];
+export function validateEnvironment() {
+  const missingVars = [];
+
+  if (!GITHUB_ID) missingVars.push("GITHUB_ID");
+  if (!GITHUB_SECRET) missingVars.push("GITHUB_SECRET");
+  if (!GITHUB_TOKEN) missingVars.push("GITHUB_TOKEN");
+  if (!NEXTAUTH_SECRET) missingVars.push("NEXTAUTH_SECRET");
+  // if (!DATABASE_URL) missingVars.push("DATABASE_URL");
 
   // At least one AI provider is required
   if (!OPENAI_API_KEY && !GOOGLE_API_KEY) {
-    console.error("At least one AI provider API key (OPENAI_API_KEY or GOOGLE_API_KEY) is required");
-    return false;
+    missingVars.push("OPENAI_API_KEY or GOOGLE_API_KEY");
   }
 
-  const missingEnvVars = requiredEnvVars.filter(({value}) => !value).map(({name}) => name);
-
-  if (missingEnvVars.length > 0) {
-    console.error(`Missing required environment variables: ${missingEnvVars.join(", ")}`);
+  if (missingVars.length > 0) {
+    console.error(`Missing required environment variables: ${missingVars.join(", ")}`);
     return false;
   }
 

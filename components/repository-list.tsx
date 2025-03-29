@@ -4,7 +4,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Switch} from "@/components/ui/switch";
-import {GitlabIcon as GitHubLogoIcon, SettingsIcon, Loader2Icon} from "lucide-react";
+import {GitlabIcon as GitHubLogoIcon, SettingsIcon, Loader2Icon, AlertCircleIcon} from "lucide-react";
 import {useSession} from "next-auth/react";
 import {useEffect, useState} from "react";
 import {fetchUserRepositories, toggleRepositoryStatus} from "@/lib/github";
@@ -35,6 +35,8 @@ export function RepositoryList() {
       if (session?.accessToken) {
         try {
           setLoading(true);
+          console.log("Loading repositories with token:", session.accessToken.substring(0, 5) + "...");
+
           const repos = await fetchUserRepositories(session.accessToken as string);
 
           // Transform the data to match our component's expected format
@@ -48,12 +50,16 @@ export function RepositoryList() {
 
           setRepositories(transformedRepos);
           setError(null);
-        } catch (err) {
-          setError("Failed to load repositories. Please try again.");
-          console.error(err);
+        } catch (err: any) {
+          console.error("Repository list error:", err);
+          setError(`Failed to load repositories: ${err.message}. Please check your GitHub token and permissions.`);
         } finally {
           setLoading(false);
         }
+      } else {
+        console.log("No session access token available");
+        setLoading(false);
+        setError("Authentication required. Please sign in with GitHub to view your repositories.");
       }
     }
 
@@ -74,13 +80,13 @@ export function RepositoryList() {
         title: enabled ? "Repository enabled" : "Repository disabled",
         description: `GitMate ${enabled ? "will now" : "will no longer"} review pull requests for this repository.`
       });
-    } catch (err) {
+    } catch (err: any) {
       // Revert the UI change on error
       setRepositories(repos => repos.map(repo => (repo.id === repoId ? {...repo, enabled: !enabled} : repo)));
 
       toast({
         title: "Failed to update repository status",
-        description: "Please try again later.",
+        description: `Error: ${err.message}. Please try again later.`,
         variant: "destructive"
       });
     }
@@ -108,7 +114,13 @@ export function RepositoryList() {
           <CardDescription>There was an error loading your repositories</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className='rounded-md bg-destructive/10 p-4 text-destructive'>{error}</div>
+          <div className='rounded-md bg-destructive/10 p-4 text-destructive flex items-start gap-3'>
+            <AlertCircleIcon className='h-5 w-5 mt-0.5 flex-shrink-0' />
+            <div>
+              <p className='font-medium mb-1'>Error</p>
+              <p className='text-sm'>{error}</p>
+            </div>
+          </div>
           <Button className='mt-4' onClick={() => window.location.reload()}>
             Try Again
           </Button>

@@ -99,6 +99,7 @@ export default function RepositoryPage() {
     loadRepositoryData();
   }, [session, repoId, router, toast]);
 
+  // Update the handleManualReview function to include a timeout
   const handleManualReview = async (prNumber: number) => {
     if (!repository) return;
 
@@ -110,45 +111,59 @@ export default function RepositoryPage() {
         description: `GitMate is analyzing the pull request using ${aiProvider === "gemini" ? "Google Gemini" : "OpenAI"}...`
       });
 
-      // Call the API to trigger a manual review
-      const response = await fetch("/api/reviews/manual", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          repositoryName: repository.name,
-          pullRequestNumber: prNumber,
-          tone: reviewTone,
-          provider: aiProvider
-        })
-      });
+      // Set a client-side timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
 
-      // Check if the response is OK before trying to parse JSON
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server error: ${response.status}`);
-        } else {
-          // Handle non-JSON error responses
-          const errorText = await response.text();
-          console.error("Non-JSON error response:", errorText);
-          throw new Error(`Server error: ${response.status}`);
+      try {
+        // Call the API to trigger a manual review
+        const response = await fetch("/api/reviews/manual", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            repositoryName: repository.name,
+            pullRequestNumber: prNumber,
+            tone: reviewTone,
+            provider: aiProvider
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId); // Clear the timeout if the request completes
+
+        // Check if the response is OK before trying to parse JSON
+        if (!response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Server error: ${response.status}`);
+          } else {
+            // Handle non-JSON error responses
+            const errorText = await response.text();
+            console.error("Non-JSON error response:", errorText);
+            throw new Error(`Server error: ${response.status}`);
+          }
         }
-      }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      toast({
-        title: "Review completed",
-        description: "GitMate has analyzed the pull request and posted a review comment."
-      });
+        toast({
+          title: "Review completed",
+          description: "GitMate has analyzed the pull request and posted a review comment."
+        });
 
-      // Open the PR in a new tab
-      const pr = pullRequests.find(pr => pr.number === prNumber);
-      if (pr) {
-        window.open(pr.url, "_blank");
+        // Open the PR in a new tab
+        const pr = pullRequests.find(pr => pr.number === prNumber);
+        if (pr) {
+          window.open(pr.url, "_blank");
+        }
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          throw new Error("Review request timed out after 90 seconds. The server might still be processing your review.");
+        }
+        throw error;
       }
     } catch (error: any) {
       console.error("Error triggering manual review:", error);
