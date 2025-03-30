@@ -1,79 +1,61 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import {
-  LayoutDashboardIcon,
-  GitPullRequestIcon,
-  BarChart3Icon,
-  SettingsIcon,
-  HelpCircleIcon,
-  BookOpenIcon,
-} from "lucide-react"
+import Link from "next/link";
+import {usePathname} from "next/navigation";
+import {cn} from "@/lib/utils";
+import {GitPullRequestIcon, Settings, Bell, HelpCircle, LayoutDashboard, BookOpen, Github} from "lucide-react";
 
-const navItems = [
+const navigation = [
   {
-    title: "Dashboard",
+    name: "Dashboard",
     href: "/dashboard",
-    icon: LayoutDashboardIcon,
+    icon: LayoutDashboard
   },
   {
-    title: "Repositories",
+    name: "Repositories",
     href: "/dashboard/repositories",
-    icon: GitPullRequestIcon,
+    icon: Github
   },
   {
-    title: "Analytics",
-    href: "/dashboard/analytics",
-    icon: BarChart3Icon,
+    name: "Documentation",
+    href: "/docs/introduction",
+    icon: BookOpen
   },
   {
-    title: "Settings",
+    name: "Settings",
     href: "/dashboard/settings",
-    icon: SettingsIcon,
+    icon: Settings
   },
   {
-    title: "Documentation",
-    href: "/dashboard/docs",
-    icon: BookOpenIcon,
-  },
-  {
-    title: "Help",
+    name: "Help",
     href: "/dashboard/help",
-    icon: HelpCircleIcon,
-  },
-]
+    icon: HelpCircle
+  }
+];
 
 export function SideNav() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
-    <div className="hidden border-r bg-background md:block">
-      <div className="flex h-full flex-col gap-2 p-4">
-        <div className="flex h-14 items-center border-b px-4 py-2">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <GitPullRequestIcon className="h-6 w-6" />
-            <span>GitMate</span>
-          </Link>
-        </div>
-        <nav className="grid gap-1 px-2 pt-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                pathname === item.href ? "bg-accent text-accent-foreground" : "transparent",
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              <span>{item.title}</span>
-            </Link>
-          ))}
-        </nav>
+    <div className='flex h-full w-64 flex-col border-r bg-background'>
+      <div className='flex h-14 items-center border-b px-4'>
+        <Link href='/dashboard' className='flex items-center gap-2'>
+          <GitPullRequestIcon className='h-6 w-6 text-primary' />
+          <span className='font-semibold'>GitMate</span>
+        </Link>
       </div>
+      <nav className='flex-1 space-y-1 p-2'>
+        {navigation.map(item => (
+          <Link
+            key={item.name}
+            href={item.href}
+            className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground", pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground")}
+          >
+            <item.icon className='h-4 w-4' />
+            {item.name}
+          </Link>
+        ))}
+      </nav>
     </div>
-  )
+  );
 }
-

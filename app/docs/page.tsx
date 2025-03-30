@@ -1,228 +1,181 @@
-import {Alert, AlertDescription, AlertTitle} from "@/components/ui/alert";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
-import {InfoIcon, BookIcon, RocketIcon, GitlabIcon as GitHubLogoIcon} from "lucide-react";
-import Link from "next/link";
+import {ScrollArea} from "@/components/ui/scroll-area";
+import {Input} from "@/components/ui/input";
+import {BookOpenIcon, GitPullRequestIcon, BrainIcon, ZapIcon, MessageSquareIcon, ShieldIcon} from "lucide-react";
+
+const categories = [
+  {
+    name: "Getting Started",
+    description: "Learn the basics of GitMate and how to get started with AI-powered code reviews.",
+    icon: BookOpenIcon,
+    articles: [
+      {
+        title: "Introduction to GitMate",
+        description: "Learn about GitMate's core features and how it can help improve your code reviews.",
+        href: "/docs/getting-started/introduction"
+      },
+      {
+        title: "Quick Start Guide",
+        description: "Get up and running with GitMate in minutes.",
+        href: "/docs/getting-started/quick-start"
+      },
+      {
+        title: "GitHub Integration",
+        description: "Learn how to integrate GitMate with your GitHub repositories.",
+        href: "/docs/getting-started/github-integration"
+      }
+    ]
+  },
+  {
+    name: "Code Reviews",
+    description: "Understanding how GitMate's AI-powered code review system works.",
+    icon: GitPullRequestIcon,
+    articles: [
+      {
+        title: "How Reviews Work",
+        description: "Learn about GitMate's review process and AI analysis.",
+        href: "/docs/reviews/how-it-works"
+      },
+      {
+        title: "Review Settings",
+        description: "Configure how GitMate analyzes your code.",
+        href: "/docs/reviews/settings"
+      },
+      {
+        title: "Review Feedback",
+        description: "Understanding the feedback and suggestions provided by GitMate.",
+        href: "/docs/reviews/feedback"
+      }
+    ]
+  },
+  {
+    name: "AI Features",
+    description: "Explore GitMate's AI-powered features and capabilities.",
+    icon: BrainIcon,
+    articles: [
+      {
+        title: "AI Review System",
+        description: "Learn how GitMate uses AI to analyze your code.",
+        href: "/docs/ai/review-system"
+      },
+      {
+        title: "Smart Comments",
+        description: "Understanding GitMate's contextual code suggestions.",
+        href: "/docs/ai/smart-comments"
+      },
+      {
+        title: "Best Practices",
+        description: "Learn about the coding standards and best practices GitMate enforces.",
+        href: "/docs/ai/best-practices"
+      }
+    ]
+  },
+  {
+    name: "Security",
+    description: "Learn about GitMate's security features and data protection.",
+    icon: ShieldIcon,
+    articles: [
+      {
+        title: "Security Overview",
+        description: "Understanding GitMate's security measures.",
+        href: "/docs/security/overview"
+      },
+      {
+        title: "Data Privacy",
+        description: "Learn how GitMate protects your code and data.",
+        href: "/docs/security/privacy"
+      },
+      {
+        title: "Access Control",
+        description: "Managing repository access and permissions.",
+        href: "/docs/security/access-control"
+      }
+    ]
+  },
+  {
+    name: "Performance",
+    description: "Learn about GitMate's performance features and optimizations.",
+    icon: ZapIcon,
+    articles: [
+      {
+        title: "Fast Reviews",
+        description: "Understanding GitMate's quick review process.",
+        href: "/docs/performance/fast-reviews"
+      },
+      {
+        title: "Optimization Tips",
+        description: "Tips for getting the most out of GitMate's performance.",
+        href: "/docs/performance/optimization"
+      },
+      {
+        title: "Resource Usage",
+        description: "Learn about GitMate's resource consumption and limits.",
+        href: "/docs/performance/resources"
+      }
+    ]
+  },
+  {
+    name: "Communication",
+    description: "Learn how GitMate helps teams communicate effectively.",
+    icon: MessageSquareIcon,
+    articles: [
+      {
+        title: "Smart Comments",
+        description: "Using GitMate's contextual code suggestions.",
+        href: "/docs/communication/smart-comments"
+      },
+      {
+        title: "Team Collaboration",
+        description: "How GitMate facilitates team communication.",
+        href: "/docs/communication/team-collaboration"
+      },
+      {
+        title: "Feedback System",
+        description: "Understanding GitMate's feedback mechanism.",
+        href: "/docs/communication/feedback"
+      }
+    ]
+  }
+];
 
 export default function DocsPage() {
   return (
-    <div className='space-y-6 lg:space-y-10'>
-      <div className='space-y-2'>
-        <h1 className='scroll-m-20 text-4xl font-bold tracking-tight'>Documentation</h1>
-        <p className='text-lg text-muted-foreground'>Learn how to install, configure, and use GitMate to improve your code quality.</p>
+    <div className='container py-6 md:py-10'>
+      <div className='flex flex-col items-center justify-center space-y-4 text-center'>
+        <h1 className='text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl'>Documentation</h1>
+        <p className='max-w-[700px] text-muted-foreground md:text-xl'>Learn how to use GitMate effectively with our comprehensive documentation.</p>
       </div>
-
-      <Alert>
-        <InfoIcon className='h-4 w-4' />
-        <AlertTitle>Heads up!</AlertTitle>
-        <AlertDescription>GitMate is currently in beta. Some features may change before the final release.</AlertDescription>
-      </Alert>
-
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-        <Card className='flex flex-col'>
-          <CardHeader>
-            <BookIcon className='h-5 w-5 text-primary mb-2' />
-            <CardTitle>Getting Started</CardTitle>
-            <CardDescription>Learn the basics of GitMate and how to set it up for your repositories.</CardDescription>
-          </CardHeader>
-          <CardContent className='flex-1'>
-            <ul className='list-disc pl-5 space-y-2'>
-              <li>
-                <Link href='/docs/getting-started/introduction' className='text-primary hover:underline'>
-                  Introduction
-                </Link>
-              </li>
-              <li>
-                <Link href='/docs/getting-started/installation' className='text-primary hover:underline'>
-                  Installation
-                </Link>
-              </li>
-              <li>
-                <Link href='/docs/getting-started/configuration' className='text-primary hover:underline'>
-                  Configuration
-                </Link>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-        <Card className='flex flex-col'>
-          <CardHeader>
-            <RocketIcon className='h-5 w-5 text-primary mb-2' />
-            <CardTitle>Features</CardTitle>
-            <CardDescription>Explore GitMate's features and how to use them effectively.</CardDescription>
-          </CardHeader>
-          <CardContent className='flex-1'>
-            <ul className='list-disc pl-5 space-y-2'>
-              <li>
-                <Link href='/docs/features/code-reviews' className='text-primary hover:underline'>
-                  AI Code Reviews
-                </Link>
-              </li>
-              <li>
-                <Link href='/docs/features/reviewer-tones' className='text-primary hover:underline'>
-                  Reviewer Tones
-                </Link>
-              </li>
-              <li>
-                <Link href='/docs/features/analytics' className='text-primary hover:underline'>
-                  Analytics Dashboard
-                </Link>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-        <Card className='flex flex-col'>
-          <CardHeader>
-            <GitHubLogoIcon className='h-5 w-5 text-primary mb-2' />
-            <CardTitle>GitHub Integration</CardTitle>
-            <CardDescription>Learn how GitMate integrates with GitHub and your workflow.</CardDescription>
-          </CardHeader>
-          <CardContent className='flex-1'>
-            <ul className='list-disc pl-5 space-y-2'>
-              <li>
-                <Link href='/docs/github/permissions' className='text-primary hover:underline'>
-                  Required Permissions
-                </Link>
-              </li>
-              <li>
-                <Link href='/docs/github/webhooks' className='text-primary hover:underline'>
-                  Webhook Events
-                </Link>
-              </li>
-              <li>
-                <Link href='/docs/github/commands' className='text-primary hover:underline'>
-                  Bot Commands
-                </Link>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className='space-y-4'>
-        <h2 className='scroll-m-20 text-2xl font-semibold tracking-tight'>Quick Start Guide</h2>
-
-        <Tabs defaultValue='github-app' className='w-full'>
-          <TabsList className='grid w-full grid-cols-2 md:w-[400px]'>
-            <TabsTrigger value='github-app'>GitHub App</TabsTrigger>
-            <TabsTrigger value='self-hosted'>Self-Hosted</TabsTrigger>
-          </TabsList>
-          <TabsContent value='github-app' className='space-y-4'>
-            <div className='rounded-md bg-muted p-4 space-y-4'>
-              <h3 className='font-medium'>1. Install the GitHub App</h3>
-              <p className='text-sm text-muted-foreground'>
-                Visit the{" "}
-                <Link href='#' className='text-primary hover:underline'>
-                  GitMate GitHub App
-                </Link>{" "}
-                page and click "Install".
-              </p>
-
-              <h3 className='font-medium'>2. Select repositories</h3>
-              <p className='text-sm text-muted-foreground'>Choose which repositories you want GitMate to have access to.</p>
-
-              <h3 className='font-medium'>3. Configure settings</h3>
-              <p className='text-sm text-muted-foreground'>After installation, you'll be redirected to the GitMate dashboard where you can configure your settings.</p>
-
-              <h3 className='font-medium'>4. Create a pull request</h3>
-              <p className='text-sm text-muted-foreground'>GitMate will automatically review new pull requests in the repositories where it's installed.</p>
-            </div>
-          </TabsContent>
-          <TabsContent value='self-hosted' className='space-y-4'>
-            <div className='rounded-md bg-muted p-4 space-y-4'>
-              <h3 className='font-medium'>1. Clone the repository</h3>
-              <p className='text-sm text-muted-foreground'>
-                <code className='rounded bg-muted-foreground/20 px-1'>git clone https://github.com/gitmate/gitmate.git</code>
-              </p>
-
-              <h3 className='font-medium'>2. Install dependencies</h3>
-              <p className='text-sm text-muted-foreground'>
-                <code className='rounded bg-muted-foreground/20 px-1'>npm install</code>
-              </p>
-
-              <h3 className='font-medium'>3. Configure environment variables</h3>
-              <p className='text-sm text-muted-foreground'>
-                Copy <code className='rounded bg-muted-foreground/20 px-1'>.env.example</code> to <code className='rounded bg-muted-foreground/20 px-1'>.env.local</code> and fill in your GitHub and OpenAI API keys.
-              </p>
-
-              <h3 className='font-medium'>4. Start the server</h3>
-              <p className='text-sm text-muted-foreground'>
-                <code className='rounded bg-muted-foreground/20 px-1'>npm run dev</code>
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <div className='space-y-4'>
-        <h2 className='scroll-m-20 text-2xl font-semibold tracking-tight'>Configuration Options</h2>
-
-        <div className='rounded-md border'>
-          <div className='grid grid-cols-5 border-b px-4 py-2 font-medium'>
-            <div className='col-span-2'>Option</div>
-            <div className='col-span-2'>Description</div>
-            <div>Default</div>
-          </div>
-          <div className='grid grid-cols-5 border-b px-4 py-3'>
-            <div className='col-span-2 font-mono text-sm'>reviewTone</div>
-            <div className='col-span-2 text-sm text-muted-foreground'>The personality tone used for code reviews</div>
-            <div className='text-sm'>"Constructive Critic"</div>
-          </div>
-          <div className='grid grid-cols-5 border-b px-4 py-3'>
-            <div className='col-span-2 font-mono text-sm'>autoReview</div>
-            <div className='col-span-2 text-sm text-muted-foreground'>Automatically review new pull requests</div>
-            <div className='text-sm'>true</div>
-          </div>
-          <div className='grid grid-cols-5 border-b px-4 py-3'>
-            <div className='col-span-2 font-mono text-sm'>commandEnabled</div>
-            <div className='col-span-2 text-sm text-muted-foreground'>Enable the /gitmate review command</div>
-            <div className='text-sm'>true</div>
-          </div>
-          <div className='grid grid-cols-5 px-4 py-3'>
-            <div className='col-span-2 font-mono text-sm'>maxReviewSize</div>
-            <div className='col-span-2 text-sm text-muted-foreground'>Maximum diff size in lines to review</div>
-            <div className='text-sm'>1000</div>
-          </div>
+      <div className='mx-auto mt-8 max-w-5xl'>
+        <div className='relative mb-8'>
+          <Input type='search' placeholder='Search documentation...' className='h-12 w-full rounded-lg border bg-background px-4 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring' />
         </div>
-      </div>
-
-      <div className='space-y-4'>
-        <h2 className='scroll-m-20 text-2xl font-semibold tracking-tight'>API Reference</h2>
-        <p className='text-muted-foreground'>GitMate provides a REST API for integrating with your own tools and workflows.</p>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Authentication</CardTitle>
-            <CardDescription>All API requests require authentication using an API key.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className='text-sm text-muted-foreground mb-4'>Include your API key in the Authorization header:</p>
-            <pre className='rounded-md bg-muted p-4 overflow-x-auto'>
-              <code>Authorization: Bearer your-api-key</code>
-            </pre>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Endpoints</CardTitle>
-            <CardDescription>Available API endpoints and their usage.</CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            <div>
-              <h3 className='font-medium mb-2'>GET /api/repositories</h3>
-              <p className='text-sm text-muted-foreground'>Returns a list of repositories connected to your GitMate account.</p>
-            </div>
-            <div>
-              <h3 className='font-medium mb-2'>POST /api/reviews</h3>
-              <p className='text-sm text-muted-foreground'>Manually trigger a code review for a specific pull request.</p>
-            </div>
-            <div>
-              <h3 className='font-medium mb-2'>GET /api/analytics</h3>
-              <p className='text-sm text-muted-foreground'>Retrieve analytics data for your repositories.</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          {categories.map(category => (
+            <Card key={category.name} className='group relative overflow-hidden transition-colors hover:bg-muted/50'>
+              <CardHeader>
+                <div className='flex items-center gap-2'>
+                  <category.icon className='h-5 w-5 text-primary' />
+                  <CardTitle className='text-xl'>{category.name}</CardTitle>
+                </div>
+                <CardDescription>{category.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className='h-[200px] pr-4'>
+                  <ul className='space-y-2'>
+                    {category.articles.map(article => (
+                      <li key={article.title}>
+                        <a href={article.href} className='block rounded-md p-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground'>
+                          <div className='font-medium'>{article.title}</div>
+                          <div className='text-xs'>{article.description}</div>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
