@@ -4,6 +4,8 @@ import {generateReview} from "@/lib/review-generator";
 import {fetchPullRequestDiff, postReviewComment} from "@/lib/github";
 import {saveReview} from "@/lib/storage-service";
 
+export const maxDuration = 300; // 5 minutes timeout
+
 export async function POST(request: Request) {
   try {
     // Verify authentication

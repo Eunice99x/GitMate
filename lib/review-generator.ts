@@ -57,25 +57,21 @@ Provide your review in markdown format with sections for:
     if (useProvider === "openai" && openaiKey) {
       console.log("Generating review with OpenAI...");
 
-      // Set the API key for this request
-      process.env.OPENAI_API_KEY = openaiKey;
-
       const {text} = await generateText({
-        model: openai("gpt-4o"),
+        model: openai("gpt-4"),
         system: systemPrompts[tone],
-        prompt
+        prompt,
+        apiKey: openaiKey
       });
       return text;
     } else if (useProvider === "gemini" && googleKey) {
       console.log("Generating review with Google Gemini...");
 
-      // Set the API key for this request
-      process.env.GOOGLE_GENERATIVE_AI_API_KEY = googleKey;
-
       const {text} = await generateText({
         model: google("gemini-1.5-pro"),
         system: systemPrompts[tone],
-        prompt
+        prompt,
+        apiKey: googleKey
       });
       return text;
     } else {
@@ -135,23 +131,19 @@ The commit message should have:
 
   try {
     if (useProvider === "openai" && openaiKey) {
-      // Set the API key for this request
-      process.env.OPENAI_API_KEY = openaiKey;
-
       const {text} = await generateText({
-        model: openai("gpt-4o"),
+        model: openai("gpt-4"),
         system,
-        prompt
+        prompt,
+        apiKey: openaiKey
       });
       return text;
     } else if (useProvider === "gemini" && googleKey) {
-      // Set the API key for this request
-      process.env.GOOGLE_API_KEY = googleKey;
-
       const {text} = await generateText({
         model: google("gemini-1.5-pro"),
         system,
-        prompt
+        prompt,
+        apiKey: googleKey
       });
       return text;
     } else {
