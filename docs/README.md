@@ -43,3 +43,4 @@ We welcome contributions to GitMate! Please see our [Contributing Guide](./contr
 ## License
 
 GitMate is licensed under the MIT License. See the [LICENSE](../LICENSE) file for more information.
+

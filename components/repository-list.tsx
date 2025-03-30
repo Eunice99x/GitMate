@@ -5,10 +5,12 @@ import {Badge} from "@/components/ui/badge";
 import {Button} from "@/components/ui/button";
 import {Switch} from "@/components/ui/switch";
 import {GitlabIcon as GitHubLogoIcon, SettingsIcon, Loader2Icon, AlertCircleIcon} from "lucide-react";
+import {useSession} from "next-auth/react";
 import {useEffect, useState} from "react";
-import {fetchUserRepositories, toggleRepositoryStatus} from "@/lib/github";
 import {useToast} from "@/hooks/use-toast";
-import {useSettings} from "@/hooks/use-settings";
+import {fetchUserRepositories} from "@/lib/github";
+import {getGitHubToken} from "@/lib/storage-service";
+import Link from "next/link";
 
 interface Repository {
   id: number;
@@ -24,7 +26,7 @@ interface Repository {
 }
 
 export function RepositoryList() {
-  const {settings} = useSettings();
+  const {data: session} = useSession();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,49 +34,87 @@ export function RepositoryList() {
 
   useEffect(() => {
     async function loadRepositories() {
-      if (settings.githubToken) {
-        try {
-          setLoading(true);
-          console.log("Loading repositories with token:", settings.githubToken.substring(0, 5) + "...");
+      try {
+        setLoading(true);
 
-          const repos = await fetchUserRepositories(settings.githubToken);
-
-          // Transform the data to match our component's expected format
-          // In a real app, you'd fetch the enabled status and review counts from your database
-          const transformedRepos = repos.map((repo: any) => ({
-            ...repo,
-            enabled: Math.random() > 0.3, // Randomly set some repos as enabled for demo
-            reviewCount: Math.floor(Math.random() * 50), // Random review count for demo
-            lastReview: ["1h ago", "3h ago", "1d ago", "2d ago", "1w ago"][Math.floor(Math.random() * 5)] // Random last review time for demo
-          }));
-
-          setRepositories(transformedRepos);
-          setError(null);
-        } catch (err: any) {
-          console.error("Repository list error:", err);
-          setError(`Failed to load repositories: ${err.message}. Please check your GitHub token and permissions.`);
-        } finally {
+        // Get GitHub token from localStorage
+        const token = getGitHubToken();
+        if (!token) {
+          setError("GitHub token not found. Please add your token in Profile Settings.");
           setLoading(false);
+          return;
         }
-      } else {
-        console.log("No GitHub token available");
+
+        console.log("Loading repositories with token:", token.substring(0, 5) + "...");
+
+        // Fetch repositories directly using our GitHub client
+        const repos = await fetchUserRepositories();
+
+        // Get enabled status from localStorage
+        const repoStatuses = JSON.parse(localStorage.getItem("repoStatuses") || "{}");
+
+        // Get review counts from localStorage
+        const reviewsData = JSON.parse(localStorage.getItem("reviews") || "[]");
+
+        // Transform the repositories
+        const transformedRepos = repos.map((repo: any) => {
+          const repoId = repo.id.toString();
+          const repoReviews = reviewsData.filter((r: any) => r.repoId === repoId);
+          const reviewCount = repoReviews.length;
+
+          // Get last review date if available
+          let lastReview = "Never";
+          if (reviewCount > 0) {
+            const sortedReviews = repoReviews.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+            const lastReviewDate = new Date(sortedReviews[0].createdAt);
+            const now = new Date();
+            const diffMs = now.getTime() - lastReviewDate.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffMins < 60) {
+              lastReview = `${diffMins}m ago`;
+            } else if (diffHours < 24) {
+              lastReview = `${diffHours}h ago`;
+            } else if (diffDays < 7) {
+              lastReview = `${diffDays}d ago`;
+            } else {
+              lastReview = lastReviewDate.toLocaleDateString();
+            }
+          }
+
+          return {
+            ...repo,
+            enabled: repoStatuses[repoId] !== false, // Default to enabled if not set
+            reviewCount,
+            lastReview
+          };
+        });
+
+        setRepositories(transformedRepos);
+        setError(null);
+      } catch (err: any) {
+        console.error("Repository list error:", err);
+        setError(`Failed to load repositories: ${err.message}. Please check your GitHub token and permissions.`);
+      } finally {
         setLoading(false);
-        setError("GitHub token required. Please configure your settings to view your repositories.");
       }
     }
 
     loadRepositories();
-  }, [settings.githubToken]);
+  }, []);
 
   const handleToggleStatus = async (repoId: number, enabled: boolean) => {
     try {
-      if (!settings.githubToken) return;
-
       // Optimistically update the UI
       setRepositories(repos => repos.map(repo => (repo.id === repoId ? {...repo, enabled} : repo)));
 
-      // Call the API to update the status
-      await toggleRepositoryStatus(repoId, enabled, settings.githubToken);
+      // Update localStorage
+      const repoStatuses = JSON.parse(localStorage.getItem("repoStatuses") || "{}");
+      repoStatuses[repoId] = enabled;
+      localStorage.setItem("repoStatuses", JSON.stringify(repoStatuses));
 
       toast({
         title: enabled ? "Repository enabled" : "Repository disabled",
@@ -199,10 +239,10 @@ export function RepositoryList() {
               <div className='flex items-center gap-2'>
                 <Switch checked={repo.enabled} onCheckedChange={checked => handleToggleStatus(repo.id, checked)} />
                 <Button variant='ghost' size='icon' asChild>
-                  <a href={`/dashboard/repositories/${repo.id}`}>
+                  <Link href={`/dashboard/repositories/${repo.id}`}>
                     <SettingsIcon className='h-4 w-4' />
                     <span className='sr-only'>Repository settings</span>
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </div>

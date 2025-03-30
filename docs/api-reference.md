@@ -5,3 +5,4 @@ This document provides a comprehensive reference for the GitMate API, including 
 ## Authentication
 
 All API requests require authentication using a GitHub access token. Include your token in the Authorization header:
+

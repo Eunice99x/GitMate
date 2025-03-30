@@ -1,6 +1,7 @@
 "use client";
 
 import {useParams, useRouter} from "next/navigation";
+import {useSession} from "next-auth/react";
 import {useEffect, useState} from "react";
 import {fetchUserRepositories, fetchRepositoryPullRequests} from "@/lib/github";
 import {Button} from "@/components/ui/button";
@@ -16,7 +17,9 @@ import {GitlabIcon as GitHubLogoIcon, GitPullRequestIcon, ArrowLeftIcon, Loader2
 import Link from "next/link";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useToast} from "@/hooks/use-toast";
-import {useSettings} from "@/hooks/use-settings";
+import {getRepoSettings, saveRepoSettings, type RepoSettings} from "@/lib/storage-service";
+import {getGitHubToken} from "@/lib/storage-service";
+import {getOpenAIKey, getGoogleKey} from "@/lib/storage-service";
 
 interface Repository {
   id: number;
@@ -45,14 +48,17 @@ interface PullRequest {
 export default function RepositoryPage() {
   const params = useParams();
   const router = useRouter();
-  const {settings} = useSettings();
+  const {data: session} = useSession();
   const [repository, setRepository] = useState<Repository | null>(null);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reviewTone, setReviewTone] = useState("constructive");
-  const [aiProvider, setAiProvider] = useState("gemini");
-  const [autoReview, setAutoReview] = useState(true);
-  const [commandEnabled, setCommandEnabled] = useState(true);
+  const [settings, setSettings] = useState<RepoSettings>({
+    enabled: true,
+    reviewTone: "Constructive Critic",
+    aiProvider: "gemini",
+    automaticReviews: true,
+    commandBasedReviews: true
+  });
   const [reviewInProgress, setReviewInProgress] = useState<number | null>(null);
   const {toast} = useToast();
 
@@ -60,13 +66,11 @@ export default function RepositoryPage() {
 
   useEffect(() => {
     async function loadRepositoryData() {
-      if (!settings.githubToken) return;
-
       try {
         setLoading(true);
 
         // Fetch all repositories to find the one with matching ID
-        const repos = await fetchUserRepositories(settings.githubToken);
+        const repos = await fetchUserRepositories();
         const repo = repos.find((r: any) => r.id.toString() === repoId);
 
         if (!repo) {
@@ -82,8 +86,12 @@ export default function RepositoryPage() {
         setRepository(repo);
 
         // Fetch pull requests for this repository
-        const prs = await fetchRepositoryPullRequests(repo.name, settings.githubToken);
+        const prs = await fetchRepositoryPullRequests(repo.name);
         setPullRequests(prs);
+
+        // Load repository settings from localStorage
+        const repoSettings = getRepoSettings(repoId);
+        setSettings(repoSettings);
       } catch (error) {
         console.error("Error loading repository data:", error);
         toast({
@@ -97,9 +105,9 @@ export default function RepositoryPage() {
     }
 
     loadRepositoryData();
-  }, [settings.githubToken, repoId, router, toast]);
+  }, [session, repoId, router, toast]);
 
-  // Update the handleManualReview function to include a timeout
+  // Update the handleManualReview function to include the API keys
   const handleManualReview = async (prNumber: number) => {
     if (!repository) return;
 
@@ -108,8 +116,18 @@ export default function RepositoryPage() {
 
       toast({
         title: "Generating review",
-        description: `GitMate is analyzing the pull request using ${aiProvider === "gemini" ? "Google Gemini" : "OpenAI"}...`
+        description: `GitMate is analyzing the pull request using ${settings.aiProvider === "gemini" ? "Google Gemini" : "OpenAI"}...`
       });
+
+      // Get the GitHub token
+      const githubToken = getGitHubToken();
+      if (!githubToken) {
+        throw new Error("GitHub token not found. Please add your token in Profile Settings.");
+      }
+
+      // Get the API keys
+      const openaiKey = getOpenAIKey();
+      const googleKey = getGoogleKey();
 
       // Set a client-side timeout
       const controller = new AbortController();
@@ -125,8 +143,11 @@ export default function RepositoryPage() {
           body: JSON.stringify({
             repositoryName: repository.name,
             pullRequestNumber: prNumber,
-            tone: reviewTone,
-            provider: aiProvider
+            tone: settings.reviewTone,
+            provider: settings.aiProvider,
+            githubToken: githubToken, // Pass the token to the API
+            openaiKey: openaiKey, // Pass the OpenAI key
+            googleKey: googleKey // Pass the Google key
           }),
           signal: controller.signal
         });
@@ -174,6 +195,25 @@ export default function RepositoryPage() {
       });
     } finally {
       setReviewInProgress(null);
+    }
+  };
+
+  const handleSaveSettings = () => {
+    try {
+      // Save settings to localStorage
+      saveRepoSettings(repoId, settings);
+
+      toast({
+        title: "Settings saved",
+        description: "Your repository settings have been updated successfully."
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "There was a problem saving your settings. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -263,7 +303,7 @@ export default function RepositoryPage() {
                 </div>
                 <div className='flex items-center justify-between'>
                   <span className='font-medium'>GitMate Status</span>
-                  <Switch defaultChecked={true} />
+                  <Switch checked={settings.enabled} onCheckedChange={checked => setSettings({...settings, enabled: checked})} />
                 </div>
               </CardContent>
             </Card>
@@ -276,17 +316,17 @@ export default function RepositoryPage() {
               <CardContent className='space-y-6'>
                 <div className='space-y-3'>
                   <Label>Review Tone</Label>
-                  <RadioGroup defaultValue={reviewTone} onValueChange={setReviewTone} className='flex flex-col space-y-1'>
+                  <RadioGroup value={settings.reviewTone} onValueChange={value => setSettings({...settings, reviewTone: value})} className='flex flex-col space-y-1'>
                     <div className='flex items-center space-x-2'>
-                      <RadioGroupItem value='constructive' id='constructive' />
+                      <RadioGroupItem value='Constructive Critic' id='constructive' />
                       <Label htmlFor='constructive'>Constructive Critic</Label>
                     </div>
                     <div className='flex items-center space-x-2'>
-                      <RadioGroupItem value='friendly' id='friendly' />
+                      <RadioGroupItem value='Friendly Mentor' id='friendly' />
                       <Label htmlFor='friendly'>Friendly Mentor</Label>
                     </div>
                     <div className='flex items-center space-x-2'>
-                      <RadioGroupItem value='enthusiastic' id='enthusiastic' />
+                      <RadioGroupItem value='Enthusiastic Coach' id='enthusiastic' />
                       <Label htmlFor='enthusiastic'>Enthusiastic Coach</Label>
                     </div>
                   </RadioGroup>
@@ -294,7 +334,7 @@ export default function RepositoryPage() {
 
                 <div className='space-y-3'>
                   <Label>AI Provider</Label>
-                  <Select defaultValue={aiProvider} onValueChange={setAiProvider}>
+                  <Select value={settings.aiProvider} onValueChange={value => setSettings({...settings, aiProvider: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder='Select AI provider' />
                     </SelectTrigger>
@@ -303,7 +343,7 @@ export default function RepositoryPage() {
                       <SelectItem value='openai'>OpenAI</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className='text-xs text-muted-foreground'>{aiProvider === "gemini" ? "Gemini offers a generous free tier and excellent code review capabilities." : "OpenAI may require a paid subscription for regular usage."}</p>
+                  <p className='text-xs text-muted-foreground'>{settings.aiProvider === "gemini" ? "Gemini offers a generous free tier and excellent code review capabilities." : "OpenAI may require a paid subscription for regular usage."}</p>
                 </div>
 
                 <Separator />
@@ -311,23 +351,15 @@ export default function RepositoryPage() {
                 <div className='space-y-3'>
                   <div className='flex items-center justify-between'>
                     <Label htmlFor='auto-review'>Automatic PR reviews</Label>
-                    <Switch id='auto-review' checked={autoReview} onCheckedChange={setAutoReview} />
+                    <Switch id='auto-review' checked={settings.automaticReviews} onCheckedChange={checked => setSettings({...settings, automaticReviews: checked})} />
                   </div>
                   <div className='flex items-center justify-between'>
                     <Label htmlFor='command-enabled'>Command-based reviews</Label>
-                    <Switch id='command-enabled' checked={commandEnabled} onCheckedChange={setCommandEnabled} />
+                    <Switch id='command-enabled' checked={settings.commandBasedReviews} onCheckedChange={checked => setSettings({...settings, commandBasedReviews: checked})} />
                   </div>
                 </div>
 
-                <Button
-                  className='w-full'
-                  onClick={() => {
-                    toast({
-                      title: "Settings saved",
-                      description: "Your repository settings have been updated successfully."
-                    });
-                  }}
-                >
+                <Button className='w-full' onClick={handleSaveSettings}>
                   Save Settings
                 </Button>
               </CardContent>

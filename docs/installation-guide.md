@@ -46,4 +46,3 @@ GitMate will automatically review new pull requests in the repositories where it
 git clone https://github.com/gitmate/gitmate.git
 cd gitmate
 
-```

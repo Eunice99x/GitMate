@@ -1,16 +1,28 @@
 import {generateText} from "ai";
 import {openai} from "@ai-sdk/openai";
 import {google} from "@ai-sdk/google";
+import {getOpenAIKey, getGoogleKey, getPreferredAIProvider} from "./storage-service";
 
 export type ReviewTone = "Constructive Critic" | "Friendly Mentor" | "Enthusiastic Coach";
 export type AIProvider = "openai" | "gemini";
 
-// Get the AI provider from environment variable or default to gemini
-const DEFAULT_AI_PROVIDER = (process.env.DEFAULT_AI_PROVIDER as AIProvider) || "gemini";
-
 // Add timeout handling to the generateReview function
-export async function generateReview(codeContent: string, tone: ReviewTone, provider?: AIProvider) {
-  const useProvider = provider || DEFAULT_AI_PROVIDER;
+export async function generateReview(codeContent: string, tone: ReviewTone, provider?: AIProvider, apiKeys?: {openaiKey?: string; googleKey?: string}) {
+  // Get the preferred provider or use the specified one
+  const useProvider = provider || getPreferredAIProvider();
+
+  // Get API keys - either from passed parameters or from storage
+  const openaiKey = apiKeys?.openaiKey || getOpenAIKey();
+  const googleKey = apiKeys?.googleKey || getGoogleKey();
+
+  // Check if we have the required API key
+  if (useProvider === "openai" && !openaiKey) {
+    throw new Error("OpenAI API key is required but not found. Please add your key in Profile Settings.");
+  }
+
+  if (useProvider === "gemini" && !googleKey) {
+    throw new Error("Google API key is required but not found. Please add your key in Profile Settings.");
+  }
 
   const systemPrompts = {
     "Constructive Critic": `You are a professional code reviewer who provides detailed, actionable feedback. 
@@ -42,34 +54,43 @@ Provide your review in markdown format with sections for:
   try {
     console.log(`Using AI provider: ${useProvider}`);
 
-    if (useProvider === "openai" && process.env.OPENAI_API_KEY) {
+    if (useProvider === "openai" && openaiKey) {
       console.log("Generating review with OpenAI...");
+
+      // Set the API key for this request
+      process.env.OPENAI_API_KEY = openaiKey;
+
       const {text} = await generateText({
         model: openai("gpt-4o"),
         system: systemPrompts[tone],
         prompt
       });
       return text;
-    } else {
-      // Default to Gemini
+    } else if (useProvider === "gemini" && googleKey) {
       console.log("Generating review with Google Gemini...");
+
+      // Set the API key for this request
+      process.env.GOOGLE_API_KEY = googleKey;
+
       const {text} = await generateText({
         model: google("gemini-1.5-pro"),
         system: systemPrompts[tone],
         prompt
       });
       return text;
+    } else {
+      throw new Error("No valid AI provider configuration found");
     }
   } catch (error: any) {
     console.error(`Error generating review with ${useProvider}:`, error);
 
     // If the primary provider fails, try the fallback
-    if (useProvider === "openai" && process.env.GOOGLE_API_KEY) {
+    if (useProvider === "openai" && googleKey) {
       console.log("Falling back to Gemini...");
-      return generateReview(codeContent, tone, "gemini");
-    } else if (useProvider === "gemini" && process.env.OPENAI_API_KEY) {
+      return generateReview(codeContent, tone, "gemini", apiKeys);
+    } else if (useProvider === "gemini" && openaiKey) {
       console.log("Falling back to OpenAI...");
-      return generateReview(codeContent, tone, "openai");
+      return generateReview(codeContent, tone, "openai", apiKeys);
     }
 
     // If we can't generate a review, return a simple message
@@ -79,16 +100,30 @@ Unfortunately, there was an error generating a detailed review: ${error.message}
 
 ### Suggestions
 - Try again later
-- Check your API keys and environment variables
+- Check your API keys in your profile settings
 - If the problem persists, try a different AI provider`;
   }
 }
 
-export async function generateCommitMessage(diffContent: string, provider?: AIProvider) {
-  const useProvider = provider || DEFAULT_AI_PROVIDER;
+export async function generateCommitMessage(diffContent: string, provider?: AIProvider, apiKeys?: {openaiKey?: string; googleKey?: string}) {
+  // Get the preferred provider or use the specified one
+  const useProvider = provider || getPreferredAIProvider();
+
+  // Get API keys - either from passed parameters or from storage
+  const openaiKey = apiKeys?.openaiKey || getOpenAIKey();
+  const googleKey = apiKeys?.googleKey || getGoogleKey();
+
+  // Check if we have the required API key
+  if (useProvider === "openai" && !openaiKey) {
+    throw new Error("OpenAI API key is required but not found. Please add your key in Profile Settings.");
+  }
+
+  if (useProvider === "gemini" && !googleKey) {
+    throw new Error("Google API key is required but not found. Please add your key in Profile Settings.");
+  }
 
   const system = `You are an AI assistant that generates clear, concise, and descriptive commit messages based on code changes.
-  Follow best practices for commit messages: use present tense, be specific but concise, and focus on what was changed and why.`;
+Follow best practices for commit messages: use present tense, be specific but concise, and focus on what was changed and why.`;
 
   const prompt = `Based on the following code diff, generate an appropriate commit message:
 
@@ -99,30 +134,37 @@ The commit message should have:
 2. A more detailed explanation if necessary (wrapped at 72 chars)`;
 
   try {
-    if (useProvider === "openai" && process.env.OPENAI_API_KEY) {
+    if (useProvider === "openai" && openaiKey) {
+      // Set the API key for this request
+      process.env.OPENAI_API_KEY = openaiKey;
+
       const {text} = await generateText({
         model: openai("gpt-4o"),
         system,
         prompt
       });
       return text;
-    } else {
-      // Default to Gemini
+    } else if (useProvider === "gemini" && googleKey) {
+      // Set the API key for this request
+      process.env.GOOGLE_API_KEY = googleKey;
+
       const {text} = await generateText({
         model: google("gemini-1.5-pro"),
         system,
         prompt
       });
       return text;
+    } else {
+      throw new Error("No valid AI provider configuration found");
     }
   } catch (error: any) {
     console.error(`Error generating commit message with ${useProvider}:`, error);
 
     // If the primary provider fails, try the fallback
-    if (useProvider === "openai" && process.env.GOOGLE_API_KEY) {
-      return generateCommitMessage(diffContent, "gemini");
-    } else if (useProvider === "gemini" && process.env.OPENAI_API_KEY) {
-      return generateCommitMessage(diffContent, "openai");
+    if (useProvider === "openai" && googleKey) {
+      return generateCommitMessage(diffContent, "gemini", apiKeys);
+    } else if (useProvider === "gemini" && openaiKey) {
+      return generateCommitMessage(diffContent, "openai", apiKeys);
     }
 
     throw new Error(`Failed to generate commit message: ${error.message}`);

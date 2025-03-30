@@ -17,18 +17,15 @@ export function Navbar() {
       <div className='container flex h-16 items-center px-4 sm:px-6 lg:px-8'>
         <div className='flex items-center gap-2 font-bold text-xl'>
           <Link href='/' className='flex items-center gap-2'>
-            <GitPullRequestIcon className='h-6 w-6 text-primary' />
+            <GitPullRequestIcon className='h-6 w-6' />
             <span>GitMate</span>
           </Link>
         </div>
         <nav className='ml-auto flex gap-4 sm:gap-6 items-center'>
-          <Link href='/features' className={`text-sm font-medium transition-colors hover:text-primary ${pathname === "/features" ? "text-primary" : ""}`}>
+          <Link href='/features' className='text-sm font-medium hover:underline'>
             Features
           </Link>
-          <Link href='/pricing' className={`text-sm font-medium transition-colors hover:text-primary ${pathname === "/pricing" ? "text-primary" : ""}`}>
-            Pricing
-          </Link>
-          <Link href='/docs' className={`text-sm font-medium transition-colors hover:text-primary ${pathname === "/docs" ? "text-primary" : ""}`}>
+          <Link href='/docs' className='text-sm font-medium hover:underline'>
             Docs
           </Link>
           {isAuthenticated ? (

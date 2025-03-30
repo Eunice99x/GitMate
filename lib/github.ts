@@ -1,12 +1,20 @@
-// Enhanced GitHub API client functions with better error handling and logging
+// Enhanced GitHub API client functions with token from storage service
 
-export async function fetchUserRepositories(accessToken: string) {
+import {getGitHubToken} from "./storage-service";
+
+export async function fetchUserRepositories(token?: string) {
   try {
     console.log("Fetching user repositories...");
+    // Use provided token or get from storage
+    const authToken = token || getGitHubToken();
+
+    if (!authToken) {
+      throw new Error("GitHub token not found. Please add your token in Profile Settings.");
+    }
 
     const response = await fetch("https://api.github.com/user/repos?sort=updated&per_page=100", {
       headers: {
-        Authorization: `token ${accessToken}`,
+        Authorization: `token ${authToken}`,
         Accept: "application/vnd.github.v3+json"
       }
     });
@@ -37,13 +45,19 @@ export async function fetchUserRepositories(accessToken: string) {
   }
 }
 
-export async function fetchRepositoryPullRequests(repoFullName: string, accessToken: string) {
+export async function fetchRepositoryPullRequests(repoFullName: string, token?: string) {
   try {
     console.log(`Fetching pull requests for ${repoFullName}...`);
+    // Use provided token or get from storage
+    const authToken = token || getGitHubToken();
+
+    if (!authToken) {
+      throw new Error("GitHub token not found. Please add your token in Profile Settings.");
+    }
 
     const response = await fetch(`https://api.github.com/repos/${repoFullName}/pulls?state=all&per_page=10`, {
       headers: {
-        Authorization: `token ${accessToken}`,
+        Authorization: `token ${authToken}`,
         Accept: "application/vnd.github.v3+json"
       }
     });
@@ -77,16 +91,22 @@ export async function fetchRepositoryPullRequests(repoFullName: string, accessTo
 }
 
 // Add timeout to the GitHub API calls
-export async function fetchPullRequestDiff(repoFullName: string, prNumber: number, accessToken: string) {
+export async function fetchPullRequestDiff(repoFullName: string, prNumber: number, token?: string) {
   try {
     console.log(`Fetching diff for ${repoFullName} PR #${prNumber}...`);
+    // Use provided token or get from storage
+    const authToken = token || getGitHubToken();
+
+    if (!authToken) {
+      throw new Error("GitHub token not found. Please add your token in Profile Settings.");
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     const response = await fetch(`https://api.github.com/repos/${repoFullName}/pulls/${prNumber}`, {
       headers: {
-        Authorization: `token ${accessToken}`,
+        Authorization: `token ${authToken}`,
         Accept: "application/vnd.github.v3+json"
       },
       signal: controller.signal
@@ -110,7 +130,7 @@ export async function fetchPullRequestDiff(repoFullName: string, prNumber: numbe
     console.log(`Fetching diff content from ${pr.diff_url}...`);
     const diffResponse = await fetch(pr.diff_url, {
       headers: {
-        Authorization: `token ${accessToken}`
+        Authorization: `token ${authToken}`
       },
       signal: diffController.signal
     });
@@ -134,9 +154,15 @@ export async function fetchPullRequestDiff(repoFullName: string, prNumber: numbe
   }
 }
 
-export async function postReviewComment(repoFullName: string, prNumber: number, reviewText: string, accessToken: string) {
+export async function postReviewComment(repoFullName: string, prNumber: number, reviewText: string, token?: string) {
   try {
     console.log(`Posting review comment to ${repoFullName} PR #${prNumber}...`);
+    // Use provided token or get from storage
+    const authToken = token || getGitHubToken();
+
+    if (!authToken) {
+      throw new Error("GitHub token not found. Please add your token in Profile Settings.");
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
@@ -144,7 +170,7 @@ export async function postReviewComment(repoFullName: string, prNumber: number, 
     const response = await fetch(`https://api.github.com/repos/${repoFullName}/issues/${prNumber}/comments`, {
       method: "POST",
       headers: {
-        Authorization: `token ${accessToken}`,
+        Authorization: `token ${authToken}`,
         Accept: "application/vnd.github.v3+json",
         "Content-Type": "application/json"
       },
@@ -173,19 +199,15 @@ export async function postReviewComment(repoFullName: string, prNumber: number, 
   }
 }
 
-export async function toggleRepositoryStatus(repoId: number, enabled: boolean, accessToken: string) {
-  // In a real implementation, this would update a database record or GitHub App installation settings
-  console.log(`Toggling repository ${repoId} status to ${enabled ? "enabled" : "disabled"}`);
-
-  // For now, we'll just return a mock success response
-  return {success: true, repoId, enabled};
-}
-
-export async function installGitHubApp(repositoryId: number, accessToken: string) {
-  // In a real implementation, this would redirect to GitHub's app installation flow
-  // or make API calls to install the app on a specific repository
-  console.log(`Installing GitHub app on repository ${repositoryId}`);
-
-  // For now, we'll just return a mock success response
-  return {success: true, repositoryId};
+export async function toggleRepositoryStatus(repoId: number, enabled: boolean) {
+  // Store repository status in localStorage
+  try {
+    const repoStatuses = JSON.parse(localStorage.getItem("repoStatuses") || "{}");
+    repoStatuses[repoId] = enabled;
+    localStorage.setItem("repoStatuses", JSON.stringify(repoStatuses));
+    return {success: true, repoId, enabled};
+  } catch (error) {
+    console.error(`Error toggling repository ${repoId}:`, error);
+    throw error;
+  }
 }
