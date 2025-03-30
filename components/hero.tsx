@@ -2,7 +2,7 @@
 
 import {Button} from "@/components/ui/button";
 import {GitHubAuthButton} from "@/components/github-auth-button";
-import {GitPullRequestIcon, Sparkles, Zap, Shield, Brain} from "lucide-react";
+import {Sparkles, Zap, Shield, Brain} from "lucide-react";
 import {motion} from "framer-motion";
 
 export function Hero() {

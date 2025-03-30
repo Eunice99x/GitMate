@@ -2,7 +2,7 @@
 
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
-import {GitPullRequestIcon, Brain, Zap, Shield, Code2, MessageSquare, GitBranch, Settings} from "lucide-react";
+import {Brain, Zap, Shield, Code2, MessageSquare, GitBranch, Settings} from "lucide-react";
 import {motion} from "framer-motion";
 
 const features = [
