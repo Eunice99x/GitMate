@@ -147,7 +147,7 @@ export default function RepositoryPage() {
             provider: settings.aiProvider,
             githubToken: githubToken, // Pass the token to the API
             openaiKey: openaiKey, // Pass the OpenAI key
-            googleApiKey: googleApiKey // Pass the Google key
+            googleGenerativeAiApiKey: googleApiKey // Pass the Google key with the correct name
           }),
           signal: controller.signal
         });
