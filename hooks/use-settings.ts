@@ -5,7 +5,6 @@ interface Settings {
   openaiApiKey: string;
   githubToken: string;
   githubSecret: string;
-  googleGenerativeAiApiKey: string;
   defaultAiProvider: string;
 }
 
@@ -15,7 +14,6 @@ export function useSettings() {
     openaiApiKey: "",
     githubToken: "",
     githubSecret: "",
-    googleGenerativeAiApiKey: "",
     defaultAiProvider: "gemini"
   });
 

@@ -127,7 +127,7 @@ export default function RepositoryPage() {
 
       // Get the API keys
       const openaiKey = getOpenAIKey();
-      const googleKey = getGoogleKey();
+      const googleApiKey = getGoogleKey();
 
       // Set a client-side timeout
       const controller = new AbortController();
@@ -147,7 +147,7 @@ export default function RepositoryPage() {
             provider: settings.aiProvider,
             githubToken: githubToken, // Pass the token to the API
             openaiKey: openaiKey, // Pass the OpenAI key
-            googleKey: googleKey // Pass the Google key
+            googleApiKey: googleApiKey // Pass the Google key
           }),
           signal: controller.signal
         });
