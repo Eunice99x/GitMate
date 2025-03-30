@@ -4,7 +4,7 @@ import {generateReview} from "@/lib/review-generator";
 import {fetchPullRequestDiff, postReviewComment} from "@/lib/github";
 import {saveReview} from "@/lib/storage-service";
 
-export const maxDuration = 300; // 5 minutes timeout
+export const maxDuration = 60; // 60 seconds timeout (Vercel Hobby plan limit)
 
 export async function POST(request: Request) {
   try {

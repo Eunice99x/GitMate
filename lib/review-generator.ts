@@ -39,7 +39,7 @@ export async function generateReview(codeContent: string, tone: ReviewTone, prov
   };
 
   // Limit the code content size to prevent timeouts
-  const truncatedContent = codeContent.length > 15000 ? codeContent.substring(0, 15000) + "\n\n[Content truncated due to size...]" : codeContent;
+  const truncatedContent = codeContent.length > 8000 ? codeContent.substring(0, 8000) + "\n\n[Content truncated due to size...]" : codeContent;
 
   const prompt = `Review the following code diff:
 
