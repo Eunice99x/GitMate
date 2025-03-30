@@ -29,10 +29,9 @@ export default function SettingsPage() {
     const formData = new FormData(e.currentTarget);
     const newSettings = {
       githubToken: formData.get("githubToken") as string,
-      googleApiKey: formData.get("googleApiKey") as string,
+      googleGenerativeAiApiKey: formData.get("googleGenerativeAiApiKey") as string,
       openaiApiKey: formData.get("openaiApiKey") as string,
       githubSecret: formData.get("githubSecret") as string,
-      googleGenerativeAiApiKey: formData.get("googleGenerativeAiApiKey") as string,
       defaultAiProvider: formData.get("defaultAiProvider") as "gemini" | "openai"
     };
 
@@ -85,13 +84,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='googleApiKey'>Google API Key</Label>
-                  <Input id='googleApiKey' name='googleApiKey' type='password' defaultValue={settings.googleApiKey} />
-                  <p className='text-sm text-muted-foreground'>Required for Gemini AI provider</p>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='googleGenerativeAiApiKey'>Google Generative AI API Key</Label>
+                  <Label htmlFor='googleGenerativeAiApiKey'>Google API Key</Label>
                   <Input id='googleGenerativeAiApiKey' name='googleGenerativeAiApiKey' type='password' defaultValue={settings.googleGenerativeAiApiKey} />
                   <p className='text-sm text-muted-foreground'>Required for Gemini AI provider</p>
                 </div>
@@ -118,18 +111,10 @@ export default function SettingsPage() {
               <div className='space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
-                    <p className='font-medium'>Google Generative AI</p>
+                    <p className='font-medium'>Google API</p>
                     <p className='text-sm text-muted-foreground'>{settings.googleGenerativeAiApiKey ? "Configured" : "Not configured"}</p>
                   </div>
                   <div className={`h-2 w-2 rounded-full ${settings.googleGenerativeAiApiKey ? "bg-green-500" : "bg-red-500"}`} />
-                </div>
-
-                <div className='flex items-center justify-between'>
-                  <div>
-                    <p className='font-medium'>Google API</p>
-                    <p className='text-sm text-muted-foreground'>{settings.googleApiKey ? "Configured" : "Not configured"}</p>
-                  </div>
-                  <div className={`h-2 w-2 rounded-full ${settings.googleApiKey ? "bg-green-500" : "bg-red-500"}`} />
                 </div>
 
                 <div className='flex items-center justify-between'>

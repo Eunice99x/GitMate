@@ -70,7 +70,7 @@ Provide your review in markdown format with sections for:
       console.log("Generating review with Google Gemini...");
 
       // Set the API key for this request
-      process.env.GOOGLE_API_KEY = googleKey;
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY = googleKey;
 
       const {text} = await generateText({
         model: google("gemini-1.5-pro"),

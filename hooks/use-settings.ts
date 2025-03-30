@@ -1,7 +1,7 @@
 import {useState, useEffect} from "react";
 
 interface Settings {
-  googleApiKey: string;
+  googleGenerativeAiApiKey: string;
   openaiApiKey: string;
   githubToken: string;
   githubSecret: string;
@@ -10,7 +10,7 @@ interface Settings {
 
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>({
-    googleApiKey: "",
+    googleGenerativeAiApiKey: "",
     openaiApiKey: "",
     githubToken: "",
     githubSecret: "",

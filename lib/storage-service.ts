@@ -24,12 +24,12 @@ export function setOpenAIKey(key: string): void {
 
 export function getGoogleKey(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("googleApiKey");
+  return localStorage.getItem("googleGenerativeAiApiKey");
 }
 
 export function setGoogleKey(key: string): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem("googleApiKey", key);
+  localStorage.setItem("googleGenerativeAiApiKey", key);
 }
 
 // AI Provider preference
