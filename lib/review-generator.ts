@@ -1,6 +1,6 @@
 import {generateText} from "ai";
 import {openai} from "@ai-sdk/openai";
-import {google} from "@ai-sdk/google";
+import {google, createGoogleGenerativeAI} from "@ai-sdk/google";
 import {getOpenAIKey, getGoogleKey, getPreferredAIProvider} from "./storage-service";
 
 export type ReviewTone = "Constructive Critic" | "Friendly Mentor" | "Enthusiastic Coach";
@@ -74,11 +74,13 @@ Provide your review in markdown format with sections for:
       console.log("Generating review with Google Gemini... API Key:", googleKey.substring(0, 5) + "...");
       console.log("API Key length:", googleKey.length);
 
-      // Set environment variable directly
-      process.env.GOOGLE_GENERATIVE_AI_API_KEY = googleKey;
+      // Create a custom Google provider instance with the API key
+      const googleProvider = createGoogleGenerativeAI({
+        apiKey: googleKey
+      });
 
       const {text} = await generateText({
-        model: google("gemini-1.5-pro"),
+        model: googleProvider("gemini-1.5-pro"),
         system: systemPrompts[tone],
         prompt
       });

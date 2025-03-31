@@ -8,7 +8,7 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Separator} from "@/components/ui/separator";
 import {Switch} from "@/components/ui/switch";
-import {ArrowLeftIcon, GithubIcon, LogOutIcon, EyeIcon, EyeOffIcon, KeyIcon} from "lucide-react";
+import {ArrowLeftIcon, GithubIcon, LogOutIcon, EyeIcon, EyeOffIcon, KeyIcon, CheckCircleIcon, AlertCircleIcon} from "lucide-react";
 import Link from "next/link";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useToast} from "@/hooks/use-toast";
@@ -27,7 +27,10 @@ export default function ProfilePage() {
   const [showGithubToken, setShowGithubToken] = useState(false);
   const [showOpenaiKey, setShowOpenaiKey] = useState(false);
   const [showGoogleKey, setShowGoogleKey] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const {toast} = useToast();
+
+  const [notificationEmail, setNotificationEmail] = useState("younesouterbah1@gmail.com");
 
   // Load saved tokens from localStorage on component mount
   useEffect(() => {
@@ -44,9 +47,11 @@ export default function ProfilePage() {
     // Load notification preferences from localStorage
     const emailNotifs = localStorage.getItem("emailNotifications") === "true";
     const weeklyDigestPref = localStorage.getItem("weeklyDigest") === "true";
+    const savedEmail = localStorage.getItem("notificationEmail") || "younesouterbah1@gmail.com";
 
     setEmailNotifications(emailNotifs);
     setWeeklyDigest(weeklyDigestPref);
+    setNotificationEmail(savedEmail);
   }, []);
 
   const handleSaveProfile = () => {
@@ -59,6 +64,11 @@ export default function ProfilePage() {
     // Save notification preferences
     localStorage.setItem("emailNotifications", emailNotifications.toString());
     localStorage.setItem("weeklyDigest", weeklyDigest.toString());
+    localStorage.setItem("notificationEmail", notificationEmail);
+
+    // Show success message and indicator
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
 
     toast({
       title: "Profile updated",
@@ -130,7 +140,10 @@ export default function ProfilePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>API Keys</CardTitle>
+                <CardTitle className='flex items-center gap-2'>
+                  API Keys
+                  {saveSuccess && <CheckCircleIcon className='h-5 w-5 text-green-500' />}
+                </CardTitle>
                 <CardDescription>Manage your API keys for GitHub and AI providers</CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
@@ -138,7 +151,7 @@ export default function ProfilePage() {
                   <div className='space-y-1'>
                     <Label htmlFor='github-token' className='flex items-center gap-2'>
                       <GithubIcon className='h-4 w-4' />
-                      GitHub Personal Access Token
+                      GitHub Personal Access Token <span className='text-red-500'>*</span>
                     </Label>
                     <div className='flex'>
                       <Input id='github-token' type={showGithubToken ? "text" : "password"} value={githubToken} onChange={e => setGithubTokenState(e.target.value)} placeholder='ghp_xxxxxxxxxxxxxxxx' className='flex-1' />
@@ -152,7 +165,7 @@ export default function ProfilePage() {
                   <div className='space-y-1'>
                     <Label htmlFor='openai-key' className='flex items-center gap-2'>
                       <KeyIcon className='h-4 w-4' />
-                      OpenAI API Keys
+                      OpenAI API Key
                     </Label>
                     <div className='flex'>
                       <Input id='openai-key' type={showOpenaiKey ? "text" : "password"} value={openaiKey} onChange={e => setOpenaiKeyState(e.target.value)} placeholder='sk-xxxxxxxxxxxxxxxx' className='flex-1' />
@@ -170,7 +183,7 @@ export default function ProfilePage() {
                   <div className='space-y-1'>
                     <Label htmlFor='google-key' className='flex items-center gap-2'>
                       <KeyIcon className='h-4 w-4' />
-                      Google AI API Key
+                      Google Gemini API Key <span className='text-red-500'>*</span>
                     </Label>
                     <div className='flex'>
                       <Input id='google-key' type={showGoogleKey ? "text" : "password"} value={googleKey} onChange={e => setGoogleKeyState(e.target.value)} placeholder='AIza...' className='flex-1' />
@@ -178,12 +191,15 @@ export default function ProfilePage() {
                         {showGoogleKey ? <EyeOffIcon className='h-4 w-4' /> : <EyeIcon className='h-4 w-4' />}
                       </Button>
                     </div>
-                    <p className='text-xs text-muted-foreground mt-1'>
-                      Optional. For using Google Gemini models for code reviews.{" "}
-                      <a href='https://ai.google.dev/' target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
-                        Get an API key
-                      </a>
-                    </p>
+                    <div className='flex items-center gap-2 mt-1'>
+                      <AlertCircleIcon className='h-4 w-4 text-amber-500' />
+                      <p className='text-xs text-amber-500'>
+                        Required for code reviews with Gemini.{" "}
+                        <a href='https://aistudio.google.com/app/apikey' target='_blank' rel='noopener noreferrer' className='font-medium underline'>
+                          Get a free API key from Google AI Studio
+                        </a>
+                      </p>
+                    </div>
                   </div>
                   <div className='space-y-1 pt-2'>
                     <Label>Preferred AI Provider</Label>
@@ -197,7 +213,7 @@ export default function ProfilePage() {
                       <div className='flex items-center space-x-2'>
                         <input type='radio' id='provider-gemini' name='ai-provider' value='gemini' checked={preferredProvider === "gemini"} onChange={() => setPreferredProviderState("gemini")} className='h-4 w-4' />
                         <Label htmlFor='provider-gemini' className='cursor-pointer'>
-                          Google Gemini
+                          Google Gemini (Recommended)
                         </Label>
                       </div>
                     </div>
@@ -233,6 +249,14 @@ export default function ProfilePage() {
               <Separator />
 
               <div className='space-y-3'>
+                <Label htmlFor='notification-email'>Notification Email</Label>
+                <Input id='notification-email' type='email' value={notificationEmail} onChange={e => setNotificationEmail(e.target.value)} placeholder='your.email@example.com' disabled={!emailNotifications} />
+                <p className='text-xs text-muted-foreground'>We'll send notifications about reviews and important updates to this email.</p>
+              </div>
+
+              <Separator />
+
+              <div className='space-y-3'>
                 <h3 className='text-sm font-medium'>Notification Events</h3>
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between'>
@@ -249,70 +273,13 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-
-              <div className='flex justify-end'>
-                <Button onClick={handleSaveProfile}>Save Preferences</Button>
-              </div>
             </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-              <CardDescription>Manage your account and connected services</CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <div className='space-y-3'>
-                <h3 className='text-sm font-medium'>Connected Accounts</h3>
-                <div className='rounded-md border p-4'>
-                  <div className='flex items-center justify-between'>
-                    <div className='flex items-center gap-3'>
-                      <GithubIcon className='h-5 w-5' />
-                      <div>
-                        <p className='font-medium'>GitHub</p>
-                        <p className='text-sm text-muted-foreground'>Connected</p>
-                      </div>
-                    </div>
-                    <Button variant='outline' size='sm'>
-                      Manage
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className='space-y-3'>
-                <h3 className='text-sm font-medium'>Danger Zone</h3>
-                <div className='rounded-md border border-destructive/20 p-4'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <p className='font-medium'>Sign out from all devices</p>
-                      <p className='text-sm text-muted-foreground'>This will sign you out from all devices where you're currently logged in.</p>
-                    </div>
-                    <Button variant='outline' size='sm'>
-                      Sign Out All
-                    </Button>
-                  </div>
-                </div>
-                <div className='rounded-md border border-destructive/20 p-4'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <p className='font-medium'>Delete account</p>
-                      <p className='text-sm text-muted-foreground'>This will permanently delete your account and all associated data.</p>
-                    </div>
-                    <Button variant='destructive' size='sm'>
-                      Delete Account
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className='flex justify-end border-t pt-6'>
-              <Button variant='outline' className='gap-2' onClick={handleSignOut}>
-                <LogOutIcon className='h-4 w-4' />
+            <CardFooter>
+              <Button variant='outline' className='mr-auto' onClick={handleSignOut}>
+                <LogOutIcon className='h-4 w-4 mr-2' />
                 Sign Out
               </Button>
+              <Button onClick={handleSaveProfile}>Save Preferences</Button>
             </CardFooter>
           </Card>
         </div>

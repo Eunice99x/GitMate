@@ -5,7 +5,7 @@ import {useSession} from "next-auth/react";
 import {useEffect, useState} from "react";
 import {fetchUserRepositories, fetchRepositoryPullRequests} from "@/lib/github";
 import {Button} from "@/components/ui/button";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter} from "@/components/ui/card";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Switch} from "@/components/ui/switch";
 import {Badge} from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import {Separator} from "@/components/ui/separator";
 import {Label} from "@/components/ui/label";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {GitlabIcon as GitHubLogoIcon, GitPullRequestIcon, ArrowLeftIcon, Loader2Icon, CheckCircleIcon, XCircleIcon, AlertCircleIcon} from "lucide-react";
+import {GitlabIcon as GitHubLogoIcon, GitPullRequestIcon, ArrowLeftIcon, Loader2Icon, CheckCircleIcon, XCircleIcon, AlertCircleIcon, SaveIcon, ExternalLinkIcon, RefreshCwIcon} from "lucide-react";
 import Link from "next/link";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useToast} from "@/hooks/use-toast";
@@ -61,6 +61,8 @@ export default function RepositoryPage() {
   });
   const [reviewInProgress, setReviewInProgress] = useState<number | null>(null);
   const {toast} = useToast();
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const repoId = typeof params.id === "string" ? params.id : Array.isArray(params.id) ? params.id[0] : "";
 
@@ -106,6 +108,46 @@ export default function RepositoryPage() {
 
     loadRepositoryData();
   }, [session, repoId, router, toast]);
+
+  // Function to refresh pull requests
+  const handleRefreshPullRequests = async () => {
+    if (!repository) return;
+
+    try {
+      setRefreshing(true);
+
+      toast({
+        title: "Refreshing pull requests",
+        description: "Fetching latest pull requests from GitHub..."
+      });
+
+      // Fetch pull requests for this repository
+      const prs = await fetchRepositoryPullRequests(repository.name);
+      setPullRequests(prs);
+      setLastUpdated(new Date());
+
+      toast({
+        title: "Pull requests refreshed",
+        description: "Latest pull requests have been loaded."
+      });
+    } catch (error) {
+      console.error("Error refreshing pull requests:", error);
+      toast({
+        title: "Error refreshing pull requests",
+        description: "There was a problem fetching the latest pull requests. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Handle opening repository in GitHub
+  const handleOpenInGitHub = () => {
+    if (repository && repository.url) {
+      window.open(repository.url, "_blank");
+    }
+  };
 
   // Update the handleManualReview function to include the API keys
   const handleManualReview = async (prNumber: number) => {
@@ -267,21 +309,28 @@ export default function RepositoryPage() {
     <div className='flex min-h-screen flex-col'>
       <main className='flex-1 py-6 px-4 sm:px-6 lg:px-8'>
         <div className='flex flex-col gap-8'>
-          <div className='flex items-center gap-4'>
-            <Button variant='outline' size='icon' asChild>
-              <Link href='/dashboard'>
-                <ArrowLeftIcon className='h-4 w-4' />
-              </Link>
-            </Button>
-            <div className='flex items-center gap-2'>
-              <GitHubLogoIcon className='h-5 w-5' />
-              <h1 className='text-2xl font-bold tracking-tight'>{repository.name}</h1>
-              {repository.private && (
-                <Badge variant='outline' className='bg-yellow-50 text-yellow-700 border-yellow-200'>
-                  Private
-                </Badge>
-              )}
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <Button variant='outline' size='icon' asChild>
+                <Link href='/dashboard'>
+                  <ArrowLeftIcon className='h-4 w-4' />
+                </Link>
+              </Button>
+              <div className='flex items-center gap-2'>
+                <GitHubLogoIcon className='h-5 w-5' />
+                <h1 className='text-2xl font-bold tracking-tight'>{repository.name}</h1>
+                {repository.private && (
+                  <Badge variant='outline' className='bg-yellow-50 text-yellow-700 border-yellow-200'>
+                    Private
+                  </Badge>
+                )}
+              </div>
             </div>
+
+            <Button variant='outline' onClick={handleOpenInGitHub}>
+              <ExternalLinkIcon className='h-4 w-4 mr-2' />
+              Open in GitHub
+            </Button>
           </div>
 
           <div className='grid gap-6 md:grid-cols-2'>
@@ -290,85 +339,91 @@ export default function RepositoryPage() {
                 <CardTitle>Repository Details</CardTitle>
                 <CardDescription>{repository.description || "No description provided"}</CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <span className='font-medium'>Repository URL</span>
-                  <a href={repository.url} target='_blank' rel='noopener noreferrer' className='text-primary hover:underline'>
-                    View on GitHub
-                  </a>
-                </div>
-                {repository.language && (
-                  <div className='flex items-center justify-between'>
-                    <span className='font-medium'>Primary Language</span>
-                    <span>{repository.language}</span>
+              <CardContent className='pt-0'>
+                <div className='grid gap-4 grid-cols-2'>
+                  <div className='space-y-1'>
+                    <span className='text-sm font-medium'>Stars</span>
+                    <p className='text-lg'>{repository.stars}</p>
                   </div>
-                )}
-                <div className='flex items-center justify-between'>
-                  <span className='font-medium'>Stars</span>
-                  <span>{repository.stars}</span>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <span className='font-medium'>GitMate Status</span>
-                  <Switch checked={settings.enabled} onCheckedChange={checked => setSettings({...settings, enabled: checked})} />
+                  <div className='space-y-1'>
+                    <span className='text-sm font-medium'>Language</span>
+                    <p className='text-lg'>{repository.language || "Not specified"}</p>
+                  </div>
+                  <div className='space-y-1'>
+                    <span className='text-sm font-medium'>Visibility</span>
+                    <p className='text-lg'>{repository.private ? "Private" : "Public"}</p>
+                  </div>
+                  <div className='space-y-1'>
+                    <span className='text-sm font-medium'>Pull Requests</span>
+                    <p className='text-lg'>{pullRequests.length}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Review Settings</CardTitle>
-                <CardDescription>Configure how GitMate reviews this repository</CardDescription>
+                <CardTitle>AI Review Settings</CardTitle>
+                <CardDescription>Configure how GitMate reviews your code</CardDescription>
               </CardHeader>
-              <CardContent className='space-y-6'>
+              <CardContent className='pt-0 space-y-6'>
                 <div className='space-y-3'>
-                  <Label>Review Tone</Label>
-                  <RadioGroup value={settings.reviewTone} onValueChange={value => setSettings({...settings, reviewTone: value})} className='flex flex-col space-y-1'>
-                    <div className='flex items-center space-x-2'>
-                      <RadioGroupItem value='Constructive Critic' id='constructive' />
-                      <Label htmlFor='constructive'>Constructive Critic</Label>
-                    </div>
-                    <div className='flex items-center space-x-2'>
-                      <RadioGroupItem value='Friendly Mentor' id='friendly' />
-                      <Label htmlFor='friendly'>Friendly Mentor</Label>
-                    </div>
-                    <div className='flex items-center space-x-2'>
-                      <RadioGroupItem value='Enthusiastic Coach' id='enthusiastic' />
-                      <Label htmlFor='enthusiastic'>Enthusiastic Coach</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className='space-y-3'>
-                  <Label>AI Provider</Label>
-                  <Select value={settings.aiProvider} onValueChange={value => setSettings({...settings, aiProvider: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select AI provider' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='gemini'>Google Gemini (Recommended)</SelectItem>
-                      <SelectItem value='openai'>OpenAI</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className='text-xs text-muted-foreground'>{settings.aiProvider === "gemini" ? "Gemini offers a generous free tier and excellent code review capabilities." : "OpenAI may require a paid subscription for regular usage."}</p>
+                  <div className='flex items-center justify-between'>
+                    <Label htmlFor='automatic-reviews' className='flex items-center gap-2'>
+                      Automatic review on new PRs
+                    </Label>
+                    <Switch id='automatic-reviews' checked={settings.automaticReviews} onCheckedChange={checked => setSettings({...settings, automaticReviews: checked})} />
+                  </div>
+                  <div className='flex items-center justify-between'>
+                    <Label htmlFor='command-based-reviews' className='flex items-center gap-2'>
+                      Command-based reviews (/gitmate review)
+                    </Label>
+                    <Switch id='command-based-reviews' checked={settings.commandBasedReviews} onCheckedChange={checked => setSettings({...settings, commandBasedReviews: checked})} />
+                  </div>
                 </div>
 
                 <Separator />
 
                 <div className='space-y-3'>
-                  <div className='flex items-center justify-between'>
-                    <Label htmlFor='auto-review'>Automatic PR reviews</Label>
-                    <Switch id='auto-review' checked={settings.automaticReviews} onCheckedChange={checked => setSettings({...settings, automaticReviews: checked})} />
-                  </div>
-                  <div className='flex items-center justify-between'>
-                    <Label htmlFor='command-enabled'>Command-based reviews</Label>
-                    <Switch id='command-enabled' checked={settings.commandBasedReviews} onCheckedChange={checked => setSettings({...settings, commandBasedReviews: checked})} />
-                  </div>
+                  <Label>Review Tone</Label>
+                  <RadioGroup defaultValue={settings.reviewTone} value={settings.reviewTone} onValueChange={value => setSettings({...settings, reviewTone: value})}>
+                    <div className='flex items-center space-x-2'>
+                      <RadioGroupItem value='Constructive Critic' id='tone-critic' />
+                      <Label htmlFor='tone-critic'>Constructive Critic</Label>
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <RadioGroupItem value='Friendly Mentor' id='tone-mentor' />
+                      <Label htmlFor='tone-mentor'>Friendly Mentor</Label>
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <RadioGroupItem value='Enthusiastic Coach' id='tone-coach' />
+                      <Label htmlFor='tone-coach'>Enthusiastic Coach</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
 
-                <Button className='w-full' onClick={handleSaveSettings}>
+                <Separator />
+
+                <div className='space-y-3'>
+                  <Label>AI Provider</Label>
+                  <RadioGroup defaultValue={settings.aiProvider} value={settings.aiProvider} onValueChange={value => setSettings({...settings, aiProvider: value as "openai" | "gemini"})}>
+                    <div className='flex items-center space-x-2'>
+                      <RadioGroupItem value='openai' id='provider-openai' />
+                      <Label htmlFor='provider-openai'>OpenAI</Label>
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <RadioGroupItem value='gemini' id='provider-gemini' />
+                      <Label htmlFor='provider-gemini'>Google Gemini (Recommended)</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleSaveSettings} className='ml-auto'>
+                  <SaveIcon className='h-4 w-4 mr-2' />
                   Save Settings
                 </Button>
-              </CardContent>
+              </CardFooter>
             </Card>
           </div>
 
@@ -376,53 +431,75 @@ export default function RepositoryPage() {
             <TabsList>
               <TabsTrigger value='pull-requests'>Pull Requests</TabsTrigger>
               <TabsTrigger value='review-history'>Review History</TabsTrigger>
-              <TabsTrigger value='analytics'>Analytics</TabsTrigger>
             </TabsList>
             <TabsContent value='pull-requests' className='mt-6'>
               <Card>
-                <CardHeader>
-                  <CardTitle>Pull Requests</CardTitle>
-                  <CardDescription>{pullRequests.length > 0 ? `${pullRequests.length} pull requests found in this repository` : "No pull requests found in this repository"}</CardDescription>
+                <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                  <div>
+                    <CardTitle>Pull Requests</CardTitle>
+                    <CardDescription>
+                      Manage and review pull requests for this repository
+                      <div className='text-xs text-muted-foreground mt-1'>Last updated: {lastUpdated.toLocaleTimeString()}</div>
+                    </CardDescription>
+                  </div>
+                  <Button variant='outline' size='sm' onClick={handleRefreshPullRequests} disabled={refreshing}>
+                    {refreshing ? (
+                      <>
+                        <Loader2Icon className='h-4 w-4 mr-2 animate-spin' />
+                        Refreshing...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCwIcon className='h-4 w-4 mr-2' />
+                        Refresh
+                      </>
+                    )}
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   {pullRequests.length === 0 ? (
-                    <div className='flex flex-col items-center justify-center py-8 text-center'>
-                      <GitPullRequestIcon className='mb-2 h-12 w-12 text-muted-foreground' />
-                      <h3 className='mb-1 text-lg font-medium'>No pull requests</h3>
-                      <p className='text-sm text-muted-foreground'>There are no pull requests in this repository yet.</p>
+                    <div className='flex flex-col items-center justify-center py-8'>
+                      <GitPullRequestIcon className='h-16 w-16 text-muted-foreground mb-4' />
+                      <h3 className='text-lg font-medium'>No pull requests found</h3>
+                      <p className='text-muted-foreground text-center mt-2 mb-6'>There are no open pull requests for this repository. Create a pull request to get started.</p>
+                      <Button variant='outline' asChild>
+                        <a href={`${repository.url}/compare`} target='_blank' rel='noopener noreferrer'>
+                          Create Pull Request
+                        </a>
+                      </Button>
                     </div>
                   ) : (
                     <div className='space-y-4'>
                       {pullRequests.map(pr => (
                         <div key={pr.id} className='flex items-start space-x-4 rounded-lg border p-4'>
-                          <Avatar className='h-10 w-10'>
-                            <AvatarImage src={pr.author.avatarUrl} alt={pr.author.login} />
-                            <AvatarFallback>{pr.author.login.charAt(0).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <div className='flex-1 space-y-1'>
-                            <a href={pr.url} target='_blank' rel='noopener noreferrer' className='text-base font-medium hover:underline'>
-                              {pr.title}
-                            </a>
+                          <div className='flex-1 space-y-2'>
+                            <div className='flex items-center gap-2'>
+                              {pr.state === "open" ? <GitPullRequestIcon className='h-4 w-4 text-green-500' /> : <GitPullRequestIcon className='h-4 w-4 text-purple-500' />}
+                              <a href={pr.url} target='_blank' rel='noopener noreferrer' className='font-medium hover:underline'>
+                                #{pr.number} {pr.title}
+                              </a>
+                              <Badge variant={pr.state === "open" ? "default" : "secondary"}>{pr.state}</Badge>
+                            </div>
                             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                              <span>#{pr.number}</span>
-                              <span>•</span>
+                              <Avatar className='h-4 w-4'>
+                                <AvatarImage src={pr.author.avatarUrl} alt={pr.author.login} />
+                                <AvatarFallback>{pr.author.login.slice(0, 2)}</AvatarFallback>
+                              </Avatar>
                               <span>{pr.author.login}</span>
                               <span>•</span>
                               <span>Created: {formatDate(pr.createdAt)}</span>
+                              <span>•</span>
+                              <span>Last updated: {formatDate(pr.updatedAt)}</span>
                             </div>
                           </div>
-                          <Badge variant={pr.state === "open" ? "outline" : pr.state === "closed" ? "secondary" : "default"}>
-                            {pr.state === "open" && <AlertCircleIcon className='mr-1 h-3 w-3' />}
-                            {pr.state === "closed" && <XCircleIcon className='mr-1 h-3 w-3' />}
-                            {pr.state === "merged" && <CheckCircleIcon className='mr-1 h-3 w-3' />}
-                            {pr.state.charAt(0).toUpperCase() + pr.state.slice(1)}
-                          </Badge>
-                          <Button variant='outline' size='sm' onClick={() => handleManualReview(pr.number)} disabled={reviewInProgress === pr.number}>
+                          <Button variant='outline' size='sm' onClick={() => handleManualReview(pr.number)} disabled={reviewInProgress === pr.number || pr.state !== "open"}>
                             {reviewInProgress === pr.number ? (
                               <>
                                 <Loader2Icon className='mr-1 h-3 w-3 animate-spin' />
                                 Reviewing...
                               </>
+                            ) : pr.state !== "open" ? (
+                              "Closed"
                             ) : (
                               "Review"
                             )}
@@ -441,75 +518,21 @@ export default function RepositoryPage() {
                   <CardDescription>Past reviews performed by GitMate on this repository</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className='flex flex-col items-center justify-center py-8 text-center'>
-                    <GitPullRequestIcon className='mb-2 h-12 w-12 text-muted-foreground' />
-                    <h3 className='mb-1 text-lg font-medium'>No review history</h3>
-                    <p className='text-sm text-muted-foreground'>GitMate hasn't reviewed any pull requests in this repository yet.</p>
+                  <div className='flex flex-col items-center justify-center py-8'>
+                    <AlertCircleIcon className='h-16 w-16 text-muted-foreground mb-4' />
+                    <h3 className='text-lg font-medium'>No review history yet</h3>
+                    <p className='text-muted-foreground text-center mt-2 mb-6'>Once you've performed reviews on pull requests, they will appear here.</p>
                     <Button
-                      className='mt-4'
+                      variant='outline'
                       onClick={() => {
-                        if (pullRequests.length > 0) {
-                          handleManualReview(pullRequests[0].number);
-                        } else {
-                          toast({
-                            title: "No pull requests",
-                            description: "There are no pull requests to review in this repository.",
-                            variant: "destructive"
-                          });
+                        const tabElement = document.querySelector('[data-value="pull-requests"]');
+                        if (tabElement instanceof HTMLElement) {
+                          tabElement.click();
                         }
                       }}
                     >
-                      Review a Pull Request
+                      Go to Pull Requests
                     </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value='analytics' className='mt-6'>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Repository Analytics</CardTitle>
-                  <CardDescription>Code quality metrics and review statistics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-                    <div className='rounded-lg border p-4'>
-                      <div className='text-sm font-medium text-muted-foreground mb-2'>Total Reviews</div>
-                      <div className='text-2xl font-bold'>0</div>
-                    </div>
-                    <div className='rounded-lg border p-4'>
-                      <div className='text-sm font-medium text-muted-foreground mb-2'>Avg. Quality Score</div>
-                      <div className='text-2xl font-bold'>N/A</div>
-                    </div>
-                    <div className='rounded-lg border p-4'>
-                      <div className='text-sm font-medium text-muted-foreground mb-2'>Issues Found</div>
-                      <div className='text-2xl font-bold'>0</div>
-                    </div>
-                    <div className='rounded-lg border p-4'>
-                      <div className='text-sm font-medium text-muted-foreground mb-2'>Improvements Made</div>
-                      <div className='text-2xl font-bold'>0</div>
-                    </div>
-                  </div>
-                  <div className='mt-6 flex justify-center'>
-                    <div className='text-center'>
-                      <p className='text-muted-foreground mb-4'>Analytics will be available after GitMate has reviewed some pull requests.</p>
-                      <Button
-                        className='mt-2'
-                        onClick={() => {
-                          if (pullRequests.length > 0) {
-                            handleManualReview(pullRequests[0].number);
-                          } else {
-                            toast({
-                              title: "No pull requests",
-                              description: "There are no pull requests to review in this repository.",
-                              variant: "destructive"
-                            });
-                          }
-                        }}
-                      >
-                        Generate First Review
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
