@@ -1,4 +1,5 @@
 import {NextResponse} from "next/server";
+import nodemailer from "nodemailer";
 
 // In a real app, you'd use Nodemailer or a service like SendGrid
 // For demo purposes, we'll just log the data
@@ -20,27 +21,39 @@ export async function POST(request: Request) {
       message
     });
 
-    // In a real app, you'd send the email here
-    // Example with Nodemailer (commented out):
-    /*
+    // Create a test transporter using Gmail SMTP
+    // For production, use an actual email service API or secure SMTP server
     const transporter = nodemailer.createTransport({
-      host: "smtp.example.com",
-      port: 587,
-      secure: false,
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
+        user: "younesouterbah1@gmail.com", // Use your email
+        pass: "Enter your app password here" // You'll need to create an app password for Gmail
       }
     });
 
-    await transporter.sendMail({
-      from: email,
-      to: "younesouterbah1@gmail.com",
-      subject: `GitMate Contact: ${subject}`,
-      text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
-      html: `<p><strong>Name:</strong> ${name}</p><p><strong>Email:</strong> ${email}</p><p>${message}</p>`
-    });
-    */
+    // Send the email
+    try {
+      await transporter.sendMail({
+        from: `"GitMate Contact Form" <younesouterbah1@gmail.com>`,
+        to: "younesouterbah1@gmail.com",
+        replyTo: email,
+        subject: `GitMate Contact: ${subject}`,
+        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+        html: `
+          <h2>New Contact Form Submission</h2>
+          <p><strong>From:</strong> ${name} (${email})</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <div style="margin-top: 20px; padding: 15px; border-left: 4px solid #ccc;">
+            ${message.replace(/\n/g, "<br>")}
+          </div>
+        `
+      });
+
+      console.log("Email sent successfully!");
+    } catch (emailError) {
+      console.error("Failed to send email:", emailError);
+      // We'll still return success to the user but log the email failure
+    }
 
     return NextResponse.json({
       success: true,
