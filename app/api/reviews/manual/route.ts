@@ -19,6 +19,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {repositoryName, pullRequestNumber, tone, provider, githubToken, openaiKey, googleGenerativeAiApiKey} = body;
 
+    console.log("Received API keys:", {
+      hasOpenAIKey: !!openaiKey,
+      hasGoogleKey: !!googleGenerativeAiApiKey,
+      provider
+    });
+
     if (!repositoryName || !pullRequestNumber) {
       console.error("Missing required parameters:", {repositoryName, pullRequestNumber});
       return NextResponse.json({error: "Missing required parameters"}, {status: 400});
@@ -44,7 +50,10 @@ export async function POST(request: Request) {
       const startTime = Date.now();
 
       // Pass the API keys to the generateReview function
-      const review = await generateReview(diffText, reviewTone, provider, {openaiKey, googleKey: googleGenerativeAiApiKey});
+      const review = await generateReview(diffText, reviewTone, provider, {
+        openaiKey,
+        googleKey: googleGenerativeAiApiKey
+      });
 
       console.log(`Review generated in ${(Date.now() - startTime) / 1000} seconds`);
 

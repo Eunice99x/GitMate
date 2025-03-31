@@ -129,6 +129,12 @@ export default function RepositoryPage() {
       const openaiKey = getOpenAIKey();
       const googleApiKey = getGoogleKey();
 
+      console.log("Sending API keys:", {
+        hasOpenAIKey: !!openaiKey,
+        hasGoogleKey: !!googleApiKey,
+        provider: settings.aiProvider
+      });
+
       // Set a client-side timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
