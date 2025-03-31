@@ -13,6 +13,10 @@ const categories = [
       {
         title: "Welcome to GitMate",
         href: "/docs/introduction"
+      },
+      {
+        title: "How it Works",
+        href: "/docs/introduction/how-it-works"
       }
     ]
   },
@@ -23,6 +27,10 @@ const categories = [
       {
         title: "AI Settings",
         href: "/docs/configuration/ai-settings"
+      },
+      {
+        title: "GitHub Setup",
+        href: "/docs/configuration/github-setup"
       }
     ]
   }

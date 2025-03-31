@@ -1,4 +1,5 @@
 import {NextResponse} from "next/server";
+import {EmailJSResponseStatus} from "@emailjs/browser";
 import emailjs from "@emailjs/nodejs";
 
 // Configure EmailJS with your service ID, template ID, and user ID
