@@ -71,10 +71,14 @@ Provide your review in markdown format with sections for:
       });
       return text;
     } else if (useProvider === "gemini" && googleKey) {
-      console.log("Generating review with Google Gemini...");
+      console.log("Generating review with Google Gemini... API Key:", googleKey.substring(0, 5) + "...");
+      console.log("API Key length:", googleKey.length);
+
+      // Set environment variable directly
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY = googleKey;
 
       const {text} = await generateText({
-        model: google("gemini-1.5-pro", {apiKey: googleKey}),
+        model: google("gemini-1.5-pro"),
         system: systemPrompts[tone],
         prompt
       });
@@ -144,11 +148,13 @@ The commit message should have:
       });
       return text;
     } else if (useProvider === "gemini" && googleKey) {
+      // Set environment variable directly
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY = googleKey;
+
       const {text} = await generateText({
         model: google("gemini-1.5-pro"),
         system,
-        prompt,
-        apiKey: googleKey
+        prompt
       });
       return text;
     } else {
