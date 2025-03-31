@@ -15,6 +15,12 @@ export async function generateReview(codeContent: string, tone: ReviewTone, prov
   const openaiKey = apiKeys?.openaiKey || getOpenAIKey();
   const googleKey = apiKeys?.googleKey || getGoogleKey();
 
+  console.log("Review generator received API keys:", {
+    hasOpenAIKey: !!openaiKey,
+    hasGoogleKey: !!googleKey,
+    provider: useProvider
+  });
+
   // Check if we have the required API key
   if (useProvider === "openai" && !openaiKey) {
     throw new Error("OpenAI API key is required but not found. Please add your key in Profile Settings.");
@@ -68,10 +74,9 @@ Provide your review in markdown format with sections for:
       console.log("Generating review with Google Gemini...");
 
       const {text} = await generateText({
-        model: google("gemini-1.5-pro"),
+        model: google("gemini-1.5-pro", {apiKey: googleKey}),
         system: systemPrompts[tone],
-        prompt,
-        apiKey: googleKey
+        prompt
       });
       return text;
     } else {
