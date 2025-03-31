@@ -63,11 +63,13 @@ Provide your review in markdown format with sections for:
     if (useProvider === "openai" && openaiKey) {
       console.log("Generating review with OpenAI...");
 
+      // Set up environment variable for OpenAI
+      process.env.OPENAI_API_KEY = openaiKey;
+
       const {text} = await generateText({
         model: openai("gpt-4"),
         system: systemPrompts[tone],
-        prompt,
-        apiKey: openaiKey
+        prompt
       });
       return text;
     } else if (useProvider === "gemini" && googleKey) {
@@ -142,11 +144,13 @@ The commit message should have:
 
   try {
     if (useProvider === "openai" && openaiKey) {
+      // Set up environment variable for OpenAI
+      process.env.OPENAI_API_KEY = openaiKey;
+
       const {text} = await generateText({
         model: openai("gpt-4"),
         system,
-        prompt,
-        apiKey: openaiKey
+        prompt
       });
       return text;
     } else if (useProvider === "gemini" && googleKey) {
