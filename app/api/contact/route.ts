@@ -1,8 +1,12 @@
 import {NextResponse} from "next/server";
-import nodemailer from "nodemailer";
+import emailjs from "@emailjs/nodejs";
 
-// In a real app, you'd use Nodemailer or a service like SendGrid
-// For demo purposes, we'll just log the data
+// Configure EmailJS with your service ID, template ID, and user ID
+// You can get these from your EmailJS dashboard
+const serviceId = "service_youremail"; // Replace with your service ID
+const templateId = "template_contact"; // Replace with your template ID
+const userId = "YOUR_USER_ID"; // Replace with your user ID
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -21,44 +25,40 @@ export async function POST(request: Request) {
       message
     });
 
-    // Create a test transporter using Gmail SMTP
-    // For production, use an actual email service API or secure SMTP server
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "younesouterbah1@gmail.com", // Use your email
-        pass: "Enter your app password here" // You'll need to create an app password for Gmail
-      }
-    });
-
-    // Send the email
     try {
-      await transporter.sendMail({
-        from: `"GitMate Contact Form" <younesouterbah1@gmail.com>`,
-        to: "younesouterbah1@gmail.com",
-        replyTo: email,
-        subject: `GitMate Contact: ${subject}`,
-        text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-        html: `
-          <h2>New Contact Form Submission</h2>
-          <p><strong>From:</strong> ${name} (${email})</p>
-          <p><strong>Subject:</strong> ${subject}</p>
-          <div style="margin-top: 20px; padding: 15px; border-left: 4px solid #ccc;">
-            ${message.replace(/\n/g, "<br>")}
-          </div>
-        `
-      });
+      // Send email using EmailJS
+      const response = await emailjs.send(
+        serviceId,
+        templateId,
+        {
+          from_name: name,
+          from_email: email,
+          subject: subject,
+          message: message,
+          to_email: "younesouterbah1@gmail.com",
+          reply_to: email
+        },
+        {
+          publicKey: userId,
+          privateKey: "" // Add your private key if needed
+        }
+      );
 
-      console.log("Email sent successfully!");
+      console.log("Email sent successfully!", response);
+
+      return NextResponse.json({
+        success: true,
+        message: "Message received! We'll get back to you soon."
+      });
     } catch (emailError) {
       console.error("Failed to send email:", emailError);
-      // We'll still return success to the user but log the email failure
+      return NextResponse.json(
+        {
+          error: "Failed to send message. Please try again later."
+        },
+        {status: 500}
+      );
     }
-
-    return NextResponse.json({
-      success: true,
-      message: "Message received! We'll get back to you soon."
-    });
   } catch (error) {
     console.error("Error handling contact form submission:", error);
     return NextResponse.json(

@@ -7,7 +7,7 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 import {ArrowLeftIcon, SearchIcon, HelpCircleIcon, BookIcon, MessageSquareIcon} from "lucide-react";
 import Link from "next/link";
-import {useState} from "react";
+import {useState, useRef} from "react";
 import {useToast} from "@/components/ui/use-toast";
 
 export default function HelpPage() {
@@ -16,6 +16,7 @@ export default function HelpPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
   const {toast} = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,24 +24,19 @@ export default function HelpPage() {
     setIsSubmitting(true);
 
     try {
-      // Call the API endpoint
-      const response = await fetch("/api/contact", {
+      // Submit the form data to FormSubmit service
+      const formData = new FormData(formRef.current as HTMLFormElement);
+
+      // Add the _next field with a thank you URL
+      formData.append("_next", window.location.href);
+
+      const response = await fetch("https://formsubmit.co/younesouterbah1@gmail.com", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          subject,
-          message
-        })
+        body: formData
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send message");
+        throw new Error("Failed to send message");
       }
 
       toast({
@@ -249,26 +245,32 @@ export default function HelpPage() {
                   </div>
                   <div className='mt-8'>
                     <h3 className='text-lg font-medium mb-4'>Send us a message</h3>
-                    <form onSubmit={handleSubmit} className='space-y-4'>
+                    <form ref={formRef} onSubmit={handleSubmit} className='space-y-4' action='https://formsubmit.co/younesouterbah1@gmail.com' method='POST'>
+                      {/* FormSubmit Configuration */}
+                      <input type='hidden' name='_subject' value='New GitMate Contact Form Submission' />
+                      <input type='hidden' name='_captcha' value='false' />
+                      <input type='hidden' name='_template' value='table' />
+                      <input type='text' name='_honey' style={{display: "none"}} />
+
                       <div className='grid gap-4 md:grid-cols-2'>
                         <div className='space-y-2'>
                           <label htmlFor='name' className='text-sm font-medium'>
                             Name
                           </label>
-                          <Input id='name' value={name} onChange={e => setName(e.target.value)} required />
+                          <Input id='name' name='name' value={name} onChange={e => setName(e.target.value)} required />
                         </div>
                         <div className='space-y-2'>
                           <label htmlFor='email' className='text-sm font-medium'>
                             Email
                           </label>
-                          <Input id='email' type='email' value={email} onChange={e => setEmail(e.target.value)} required />
+                          <Input id='email' name='email' type='email' value={email} onChange={e => setEmail(e.target.value)} required />
                         </div>
                       </div>
                       <div className='space-y-2'>
                         <label htmlFor='subject' className='text-sm font-medium'>
                           Subject
                         </label>
-                        <Input id='subject' value={subject} onChange={e => setSubject(e.target.value)} required />
+                        <Input id='subject' name='subject' value={subject} onChange={e => setSubject(e.target.value)} required />
                       </div>
                       <div className='space-y-2'>
                         <label htmlFor='message' className='text-sm font-medium'>
@@ -276,6 +278,7 @@ export default function HelpPage() {
                         </label>
                         <textarea
                           id='message'
+                          name='message'
                           className='flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
                           value={message}
                           onChange={e => setMessage(e.target.value)}
