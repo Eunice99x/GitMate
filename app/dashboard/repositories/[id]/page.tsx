@@ -171,6 +171,13 @@ export default function RepositoryPage() {
       const openaiKey = getOpenAIKey();
       const googleApiKey = getGoogleKey();
 
+      // Check if the required API key is available
+      if (settings.aiProvider === "openai" && !openaiKey) {
+        throw new Error("OpenAI API key not found. Please add your key in Profile Settings.");
+      } else if (settings.aiProvider === "gemini" && !googleApiKey) {
+        throw new Error("Google API key not found. Please add your key in Profile Settings.");
+      }
+
       console.log("Sending API keys:", {
         hasOpenAIKey: !!openaiKey,
         hasGoogleKey: !!googleApiKey,

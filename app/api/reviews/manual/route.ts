@@ -1,4 +1,4 @@
-import {NextResponse} from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 import {getToken} from "next-auth/jwt";
 import {generateReview} from "@/lib/review-generator";
 import {fetchPullRequestDiff, postReviewComment} from "@/lib/github";
@@ -6,10 +6,10 @@ import {saveReview} from "@/lib/storage-service";
 
 export const maxDuration = 60; // 60 seconds timeout (Vercel Hobby plan limit)
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     // Verify authentication
-    const token = await getToken({req: request});
+    const token = await getToken({req: request as any});
     if (!token) {
       console.error("Unauthorized request to manual review endpoint");
       return NextResponse.json({error: "Unauthorized"}, {status: 401});
@@ -33,6 +33,17 @@ export async function POST(request: Request) {
     if (!githubToken) {
       console.error("Missing GitHub token");
       return NextResponse.json({error: "GitHub token is required"}, {status: 400});
+    }
+
+    // Validate provider-specific API keys
+    if (provider === "openai" && !openaiKey) {
+      console.error("Missing OpenAI API key when provider is OpenAI");
+      return NextResponse.json({error: "OpenAI API key is required when using OpenAI provider"}, {status: 400});
+    }
+
+    if (provider === "gemini" && !googleGenerativeAiApiKey) {
+      console.error("Missing Google API key when provider is Gemini");
+      return NextResponse.json({error: "Google API key is required when using Gemini provider"}, {status: 400});
     }
 
     console.log(`Generating review for ${repositoryName} PR #${pullRequestNumber} with tone: ${tone}, provider: ${provider}`);
